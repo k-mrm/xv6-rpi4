@@ -9,11 +9,11 @@
 .section ".text"
 .global _entry
 _entry:
-        mrs x1, mpidr_el1
-        and x1, x1, #0x3
-        mrs x2, currentel
-        cbz x1, swtch_el2        // primary
-        // b entryothers         // secondary
+        mrs x1, currentel
+        cmp x1, #0xc      // I'm in EL3
+        beq swtch_el2
+        cmp x1, #0x8      // I'm in EL2
+        beq swtch_el1
         b hang
 
 hang:
@@ -47,6 +47,12 @@ swtch_el1:
         eret
 
 entry:
+        mrs x1, mpidr_el1
+        and x1, x1, #0x3
+        cbz x1, entry_prim    // primary
+        b hang    // secondary
+
+entry_prim:
         // clear .bss
         adrp x1, bss_start
         ldr w2, =bss_size

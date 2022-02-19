@@ -21,21 +21,9 @@
 #define EXTMEM    0x80000L        // Start PA of extended memory
 #define PHYSTOP   (EXTMEM+128*1024*1024)     // PA of Top SDRAM
 
-#define KERNBASE  0xffffff8000000000L     // First kernel virtual address
-#define KERNLINK  (KERNBASE + EXTMEM)     // virtual address where kernel is linked
-
-#define V2P(a) (((uint64)(a)) - KERNBASE)
-#define P2V(a) ((void *)(((char *)(a)) + KERNBASE))
-
-#define V2P_WO(x) ((x) - KERNBASE)    // same as V2P, but without casts
-#define P2V_WO(x) ((x) + KERNBASE)    // same as P2V, but without casts
-
-// one beyond the highest possible virtual address.
-#define MAXVA (KERNBASE + (1ULL<<38))
-
 // rpi4 peripheral base address
-#define PERIPHERAL_BASE (KERNBASE + 0xfe000000L)
-//#define PERIPHERAL_BASE (KERNBASE + 0x3f000000L)
+//#define PERIPHERAL_BASE (0xfe000000L)
+#define PERIPHERAL_BASE (KERNBASE + 0x3f000000L)
 
 // rpi4 gpio
 #define GPIOBASE    (PERIPHERAL_BASE + 0x200000)
@@ -47,9 +35,5 @@
 #define TIMER0_IRQ    27
 
 // interrupt controller GICv2
-#define GICDBASE     (KERNBASE + 0xff841000)
-#define GICCBASE     (KERNBASE + 0xff842000)
-
-// map kernel stacks beneath the trampoline,
-// each surrounded by invalid guard pages.
-#define KSTACK(p)   (MAXVA - ((p)+1) * 2*PGSIZE)
+#define GICDBASE     (0xff841000)
+#define GICCBASE     (0xff842000)

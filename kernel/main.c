@@ -17,6 +17,7 @@ main()
     kinit1(end, (void*)SECTROUNDUP(KERNLINK));  // physical page allocator
     kvminit();       // create kernel page table
     kvminithart();   // turn on paging
+    printf("helloo");
     kinit2((void*)SECTROUNDUP(KERNLINK), P2V(PHYSTOP));
     consoleinit();
     printfinit();

@@ -1,5 +1,8 @@
 K=kernel
 U=user
+T=test
+
+TOBJS = $T/entry.o $T/gpio.o $T/uart.o $T/start.o $T/main.o
 
 OBJS = \
   $K/entry.o \
@@ -72,6 +75,12 @@ endif
 LDFLAGS = -z max-page-size=4096
 ASFLAGS = -Og -ggdb -mcpu=cortex-a72 -MD -I.
 
+$T/hwtest: $(TOBJS) $T/test.ld
+	$(LD) $(LDFLAGS) -T $T/test.ld -o $T/hwtest $(TOBJS)
+
+hwtest.img: $T/hwtest
+	$(OBJCOPY) -O binary $^ $@
+
 $K/kernel: $(OBJS) $K/kernel.ld $U/initcode fs.img
 	$(LD) -r -b binary fs.img -o fs.img.o
 	$(LD) $(LDFLAGS) -T $K/kernel.ld -o $K/kernel $(OBJS) fs.img.o
@@ -143,11 +152,13 @@ fs.img: mkfs/mkfs README $(UPROGS)
 
 clean: 
 	rm -f *.tex *.dvi *.idx *.aux *.log *.ind *.ilg \
-	*/*.o */*.d */*.asm */*.sym *.img *.o \
-	$U/initcode $U/initcode.out $K/kernel fs.img \
+	*/*.o */*.d */*.asm */*.sym *.img */*.img *.o \
+	$U/initcode $U/initcode.out $K/kernel fs.img $T/hwtest \
 	mkfs/mkfs .gdbinit \
         $U/usys.S \
 	$(UPROGS)
+
+SDPATH = /media/k-mrm/09D0-F0A8/
 
 # try to generate a unique GDB port
 GDBPORT = $(shell expr `id -u` % 5000 + 25000)
@@ -163,6 +174,12 @@ QEMUOPTS = -cpu cortex-a72 -machine raspi3 -kernel $K/kernel -m 1G -smp $(CPUS) 
 
 qemu: kernel8.img
 	$(QEMU) $(QEMUOPTS)
+
+rpi4: kernel8.img
+	cp kernel8.img $(SDPATH)
+
+test: hwtest.img
+	cp hwtest.img $(SDPATH)kernel8.img	
 
 .gdbinit: .gdbinit.tmpl-aarch64
 	sed "s/:1234/:$(GDBPORT)/" < $^ > $@

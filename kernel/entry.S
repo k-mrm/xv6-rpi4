@@ -9,28 +9,14 @@
 .section ".text"
 .global _entry
 _entry:
-        mrs x1, currentel
-        cmp x1, #0xc      // I'm in EL3
-        beq swtch_el2
-        cmp x1, #0x8      // I'm in EL2
-        beq swtch_el1
+        mrs x1, mpidr_el1
+        and x1, x1, #3
+        cbz x1, swtch_el1
         b hang
 
 hang:
         wfe
         b hang
-
-        // switch EL3 to EL2
-swtch_el2:
-        mov x0, #0x4b1    // RW=1, SMD=1, RES=1, NS=1
-        msr scr_el3, x0
-
-        adr x1, swtch_el1
-        msr elr_el3, x1
-
-        mov x2, #0x9      // EL2H
-        msr spsr_el3, x2
-        eret
 
         // switch EL2 to EL1
 swtch_el1:
@@ -47,12 +33,14 @@ swtch_el1:
         eret
 
 entry:
+/*
         mrs x1, mpidr_el1
         and x1, x1, #0x3
         cbz x1, entry_prim    // primary
         b hang    // secondary
 
 entry_prim:
+        */
         // clear .bss
         adrp x1, bss_start
         ldr w2, =bss_size
@@ -76,7 +64,7 @@ entry_prim:
         // memory type is normal.
 
         // Phase 1
-        // map [0x40000000,PA(end)) to [0x40000000,PA(end))
+        // map [0x80000,PA(end)) to [0x80000,PA(end))
         adrp x0, l2entrypgt
 
         mov x1, #0x80000

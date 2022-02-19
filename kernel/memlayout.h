@@ -18,8 +18,8 @@
 
 #define REG(reg) ((volatile uint32 *)(reg))
 
-#define EXTMEM    0x80000L               // Start of extended memory
-#define PHYSTOP   (EXTMEM + 128*1024*1024)  // Top physical memory
+#define EXTMEM    0x80000L        // Start PA of extended memory
+#define PHYSTOP   (EXTMEM+128*1024*1024)     // PA of Top SDRAM
 
 #define KERNBASE  0xffffff8000000000L     // First kernel virtual address
 #define KERNLINK  (KERNBASE + EXTMEM)     // virtual address where kernel is linked

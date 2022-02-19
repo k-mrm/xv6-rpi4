@@ -150,8 +150,6 @@ mappages(pagetable_t pagetable, uint64 va, uint64 size, uint64 pa, uint64 perm)
 
   if(size == 0)
     panic("mappages: size");
-  if(pa >= PHYSTOP)
-    panic("pa");
   
   a = PGROUNDDOWN(va);
   last = PGROUNDDOWN(va + size - 1);

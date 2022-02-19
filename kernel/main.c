@@ -4,8 +4,6 @@
 #include "aarch64.h"
 #include "defs.h"
 
-#define  PSCI_CPUON   0xc4000003
-
 volatile static int started = 0;
 extern char end[];  // first address after kernel loaded from ELF file
 
@@ -16,10 +14,10 @@ void
 main()
 {
   if(cpuid() == 0){
-    kinit1(end, (void*)(KERNLINK+2*1024*1024));  // physical page allocator
+    kinit1(end, (void*)SECTROUNDUP(KERNLINK));  // physical page allocator
     kvminit();       // create kernel page table
     kvminithart();   // turn on paging
-    kinit2((void*)(KERNLINK+2*1024*1024), P2V(PHYSTOP));
+    kinit2((void*)SECTROUNDUP(KERNLINK), P2V(PHYSTOP));
     consoleinit();
     printfinit();
     printf("\n");

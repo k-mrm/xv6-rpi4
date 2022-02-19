@@ -209,6 +209,9 @@ typedef uint64 *pagetable_t; // 512 PTEs
 #define PGROUNDUP(sz)  (((sz)+PGSIZE-1) & ~(PGSIZE-1))
 #define PGROUNDDOWN(a) (((a)) & ~(PGSIZE-1))
 
+#define SECTSIZE  (2*1024*1024)   // 2MB
+#define SECTROUNDUP(sz)  (((sz)+SECTSIZE-1) & ~(SECTSIZE-1))
+
 #define PTE_VALID 1  // level 0,1,2 descriptor: valid
 #define PTE_TABLE 2  // level 0,1,2 descriptor: table
 #define PTE_V     3  // level 3 descriptor: valid

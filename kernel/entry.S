@@ -25,11 +25,11 @@ swtch_el2:
         mov x0, #0x4b1    // RW=1, SMD=1, RES=1, NS=1
         msr scr_el3, x0
 
-        adrp x0, swtch_el1
-        msr elr_el3, x0
+        adr x1, swtch_el1
+        msr elr_el3, x1
 
-        mov x1, #0x9      // EL2H
-        msr spsr_el3, x1
+        mov x2, #0x9      // EL2H
+        msr spsr_el3, x2
         eret
 
         // switch EL2 to EL1
@@ -38,11 +38,11 @@ swtch_el1:
         orr x0, x0, #(1 << 1)
         msr hcr_el2, x0
 
-        adrp x0, entry
-        msr elr_el2, x0
+        adr x1, entry
+        msr elr_el2, x1
 
-        mov x1, #0x3c5  // DAIF=0b1111, M=0b101(EL1H)
-        msr spsr_el2, x1
+        mov x2, #0x3c5  // DAIF=0b1111, M=0b101(EL1H)
+        msr spsr_el2, x2
 
         eret
 
@@ -61,19 +61,19 @@ entry:
         //
         // Phase 1.
         // map the kernel code identically.
-        // map [0x40000000,PA(end)) to [0x40000000,PA(end))
+        // map [0x80000,PA(end)) to [0x80000,PA(end))
         // memory type is normal
         //
         // Phase 2.
         // map the kernel code.
-        // map [0xffffff8040000000,VA(end)) to [0x40000000,PA(end))
+        // map [0xffffff8000080000,VA(end)) to [0x80000,PA(end))
         // memory type is normal.
 
         // Phase 1
         // map [0x40000000,PA(end)) to [0x40000000,PA(end))
         adrp x0, l2entrypgt
 
-        mov x1, #0x40000000
+        mov x1, #0x80000
         ldr x2, =V2P_WO(end)-1
 
         lsr x3, x1, #PXSHIFT(2)
@@ -101,10 +101,10 @@ l2epgt_loop:
         str x6, [x0, x3, lsl #3]    // l1entrypgt[l1idx] = table entry
 
         // Phase 2
-        // map [0xffffff8040000000,VA(end)) to [0x40000000,PA(end))
+        // map [0xffffff8000080000,VA(end)) to [0x80000,PA(end))
         adrp x0, l2kpgt
 
-        mov x1, #0x40000000   // start pa
+        mov x1, #0x80000   // start pa
         ldr x2, =V2P_WO(end)-1   // end pa
         mov x3, #KERNBASE
         add x4, x1, x3    // start va

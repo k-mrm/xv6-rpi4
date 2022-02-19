@@ -25,13 +25,14 @@ kvmmake(void)
   memset(kpgtbl, 0, PGSIZE);
 
   // uart registers
-  kvmmap(kpgtbl, UART0, V2P(UART0), PGSIZE, PTE_DEVICE | PTE_XN);
+  kvmmap(kpgtbl, UART(0), V2P(UART(0)), PGSIZE, PTE_DEVICE | PTE_XN);
 
-  // virtio mmio disk interface
-  kvmmap(kpgtbl, VIRTIO0, V2P(VIRTIO0), PGSIZE, PTE_DEVICE | PTE_XN);
+  // gpio
+  kvmmap(kpgtbl, GPIOBASE, V2P(GPIOBASE), PGSIZE, PTE_DEVICE | PTE_XN);
 
   // GICv2
-  kvmmap(kpgtbl, GICV2, V2P(GICV2), 0x20000, PTE_DEVICE | PTE_XN);
+  kvmmap(kpgtbl, GICDBASE, V2P(GICDBASE), 0x1000, PTE_DEVICE | PTE_XN);
+  kvmmap(kpgtbl, GICCBASE, V2P(GICCBASE), 0x2000, PTE_DEVICE | PTE_XN);
 
   // map kernel text executable and read-only.
   kvmmap(kpgtbl, KERNLINK, V2P(KERNLINK), (uint64)etext-KERNLINK, PTE_NORMAL | PTE_RO);

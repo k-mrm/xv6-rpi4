@@ -2,17 +2,49 @@
 #include "memlayout.h"
 #include "param.h"
 
-        // qemu -kernel loads the kernel at 0x40000000
+        // qemu -kernel loads the kernel at 0x80000
         // and causes each CPU to jump there.
         // kernel.ld causes the following code to
-        // be placed at 0x40000000.
+        // be placed at 0x80000.
 .section ".text"
 .global _entry
 _entry:
         mrs x1, mpidr_el1
         and x1, x1, #0x3
-        cbz x1, entry         // primary
-        b entryothers         // secondary
+        mrs x2, currentel
+        cbz x1, swtch_el2        // primary
+        // b entryothers         // secondary
+        b hang
+
+hang:
+        wfe
+        b hang
+
+        // switch EL3 to EL2
+swtch_el2:
+        mov x0, #0x4b1    // RW=1, SMD=1, RES=1, NS=1
+        msr scr_el3, x0
+
+        adrp x0, swtch_el1
+        msr elr_el3, x0
+
+        mov x1, #0x9      // EL2H
+        msr spsr_el3, x1
+        eret
+
+        // switch EL2 to EL1
+swtch_el1:
+        mov x0, #(1 << 31) 
+        orr x0, x0, #(1 << 1)
+        msr hcr_el2, x0
+
+        adrp x0, entry
+        msr elr_el2, x0
+
+        mov x1, #0x3c5  // DAIF=0b1111, M=0b101(EL1H)
+        msr spsr_el2, x1
+
+        eret
 
 entry:
         // clear .bss
@@ -146,8 +178,3 @@ _start:
         b main
 
         b .   // spin
-
-.global psci_call
-psci_call:
-        hvc #0
-        ret

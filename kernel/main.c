@@ -35,10 +35,8 @@ main()
     binit();         // buffer cache
     iinit();         // inode table
     fileinit();      // file table
-    virtio_disk_init(); // emulated hard disk
+    ramdiskinit();
     userinit();      // first user process
-    for(int i = 1; i < NCPU; i++)   // wakeup other processors
-      psci_call(PSCI_CPUON, i, V2P(_entry), 0);
     __sync_synchronize();
     started = 1;
   } else {

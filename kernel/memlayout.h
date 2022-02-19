@@ -16,7 +16,9 @@
 // end -- start of kernel page allocation area
 // PHYSTOP -- end RAM used by the kernel
 
-#define EXTMEM    0x40000000L               // Start of extended memory
+#define REG(reg) ((volatile uint32 *)(reg))
+
+#define EXTMEM    0x80000L               // Start of extended memory
 #define PHYSTOP   (EXTMEM + 128*1024*1024)  // Top physical memory
 
 #define KERNBASE  0xffffff8000000000L     // First kernel virtual address
@@ -31,19 +33,23 @@
 // one beyond the highest possible virtual address.
 #define MAXVA (KERNBASE + (1ULL<<38))
 
-// qemu puts UART registers here in physical memory.
-#define UART0 (KERNBASE + 0x09000000L)
-#define UART0_IRQ 33
+// rpi4 peripheral base address
+//#define PERIPHERAL_BASE (KERNBASE + 0xfe000000L)
+#define PERIPHERAL_BASE (KERNBASE + 0x3f000000L)
 
-// virtio mmio interface
-#define VIRTIO0  (KERNBASE + 0x0a000000L)
-#define VIRTIO0_IRQ  48
+// rpi4 gpio
+#define GPIOBASE    (PERIPHERAL_BASE + 0x200000)
 
-#define TIMER0_IRQ  27
+// rpi4 uart
+#define UART(n)     (PERIPHERAL_BASE + 0x201000 + (n)*0x200)
+#define UART0_IRQ   153
+
+#define TIMER0_IRQ    27
 
 // interrupt controller GICv2
-#define GICV2 (KERNBASE + 0x08000000L)
+#define GICDBASE     (KERNBASE + 0xff841000)
+#define GICCBASE     (KERNBASE + 0xff842000)
 
 // map kernel stacks beneath the trampoline,
 // each surrounded by invalid guard pages.
-#define KSTACK(p) (MAXVA - ((p)+1) * 2*PGSIZE)
+#define KSTACK(p)   (MAXVA - ((p)+1) * 2*PGSIZE)

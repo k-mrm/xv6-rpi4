@@ -29,8 +29,9 @@ OBJS = \
   $K/kernelvec.o \
   $K/uservec.o \
   $K/timer.o \
-  $K/virtio_disk.o \
   $K/gicv2.o \
+	$K/gpio.o \
+	$K/ramdisk.o
 
 # Try to infer the correct TOOLPREFIX if not set
 ifndef TOOLPREFIX
@@ -71,10 +72,14 @@ endif
 LDFLAGS = -z max-page-size=4096
 ASFLAGS = -Og -ggdb -mcpu=cortex-a72 -MD -I.
 
-$K/kernel: $(OBJS) $K/kernel.ld $U/initcode
-	$(LD) $(LDFLAGS) -T $K/kernel.ld -o $K/kernel $(OBJS) 
+$K/kernel: $(OBJS) $K/kernel.ld $U/initcode fs.img
+	$(LD) -r -b binary fs.img -o fs.img.o
+	$(LD) $(LDFLAGS) -T $K/kernel.ld -o $K/kernel $(OBJS) fs.img.o
 	$(OBJDUMP) -S $K/kernel > $K/kernel.asm
 	$(OBJDUMP) -t $K/kernel | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $K/kernel.sym
+
+kernel8.img: $K/kernel
+	$(OBJCOPY) -O binary $^ $@
 
 $U/initcode: $U/initcode.S
 	$(CC) $(CFLAGS) -nostdinc -I. -Ikernel -c $U/initcode.S -o $U/initcode.o
@@ -138,7 +143,7 @@ fs.img: mkfs/mkfs README $(UPROGS)
 
 clean: 
 	rm -f *.tex *.dvi *.idx *.aux *.log *.ind *.ilg \
-	*/*.o */*.d */*.asm */*.sym \
+	*/*.o */*.d */*.asm */*.sym *.img *.o \
 	$U/initcode $U/initcode.out $K/kernel fs.img \
 	mkfs/mkfs .gdbinit \
         $U/usys.S \
@@ -151,14 +156,12 @@ QEMUGDB = $(shell if $(QEMU) -help | grep -q '^-gdb'; \
 	then echo "-gdb tcp::$(GDBPORT)"; \
 	else echo "-s -p $(GDBPORT)"; fi)
 ifndef CPUS
-CPUS := 3
+CPUS := 4
 endif
 
-QEMUOPTS = -cpu cortex-a72 -machine virt,gic-version=2 -kernel $K/kernel -m 128M -smp $(CPUS) -nographic
-QEMUOPTS += -drive file=fs.img,if=none,format=raw,id=x0
-QEMUOPTS += -device virtio-blk-device,drive=x0,bus=virtio-mmio-bus.0
+QEMUOPTS = -cpu cortex-a72 -machine raspi3 -kernel $K/kernel -m 1G -smp $(CPUS) -nographic
 
-qemu: $K/kernel fs.img
+qemu: kernel8.img
 	$(QEMU) $(QEMUOPTS)
 
 .gdbinit: .gdbinit.tmpl-aarch64

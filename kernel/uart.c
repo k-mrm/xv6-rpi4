@@ -9,33 +9,33 @@
 #include "spinlock.h"
 #include "proc.h"
 #include "defs.h"
+#include "gpio.h"
 
-// the UART control registers are memory-mapped
-// at address UART0. this macro returns the
-// address of one of the registers.
-#define Reg(reg) ((volatile uint32 *)(UART0 + reg))
-
-// the UART control registers.
 // pl011
-#define DR  0x00
-#define FR  0x18
+#define DR(n)    (UART(n) + 0x00)
+#define FR(n)    (UART(n) + 0x18)
 #define FR_RXFE (1<<4)  // recieve fifo empty
 #define FR_TXFF (1<<5)  // transmit fifo full
 #define FR_RXFF (1<<6)  // recieve fifo full
 #define FR_TXFE (1<<7)  // transmit fifo empty
-#define IBRD  0x24
-#define FBRD  0x28
-#define LCRH  0x2c
-#define LCRH_FEN  (1<<4)
+#define IBRD(n)  (UART(n) + 0x24)
+#define FBRD(n)  (UART(n) + 0x28)
+#define LCRH(n)  (UART(n) + 0x2c)
+#define LCRH_FEN        (1<<4)
 #define LCRH_WLEN_8BIT  (3<<5)
-#define CR    0x30
-#define IMSC  0x38
+#define CR(n)    (UART(n) + 0x30)
+#define IMSC(n)  (UART(n) + 0x38)
 #define INT_RX_ENABLE (1<<4)
 #define INT_TX_ENABLE (1<<5)
-#define ICR   0x44
+#define ICR(n)   (UART(n) + 0x44)
 
-#define ReadReg(reg) (*(Reg(reg)))
-#define WriteReg(reg, v) (*(Reg(reg)) = (v))
+#define UART_FREQ 48000000ull
+
+// the UART control registers.
+// pl011
+
+#define ReadReg(reg)     (*(REG(reg)))
+#define WriteReg(reg, v) (*(REG(reg)) = (uint32)(v))
 
 // the transmit output buffer.
 struct spinlock uart_tx_lock;
@@ -49,25 +49,40 @@ extern volatile int panicked; // from printf.c
 void uartstart();
 
 void
-uartinit(void)
+set_uart_baudrate(int n, uint64 baud)
+{
+  uint64 bauddiv = (UART_FREQ * 1000) / (16 * baud);
+  uint64 ibrd = bauddiv / 1000;
+  uint64 fbrd = ((bauddiv - ibrd * 1000) * 64 + 500) / 1000;
+
+  WriteReg(IBRD(n), (uint32)ibrd);
+  WriteReg(FBRD(n), (uint32)fbrd);
+}
+
+void
+uartinit(int n)
 {
   // disable uart
-  WriteReg(CR, 0);
+  WriteReg(CR(n), 0);
 
   // disable interrupts.
-  WriteReg(IMSC, 0);
+  WriteReg(IMSC(n), 0);
 
-  // in qemu, it is not necessary to set baudrate.
+  // set baudrate.
+  set_uart_baudrate(n, 115200);
 
   // enable FIFOs.
   // set word length to 8 bits, no parity.
-  WriteReg(LCRH, LCRH_FEN | LCRH_WLEN_8BIT);
+  WriteReg(LCRH(n), LCRH_FEN | LCRH_WLEN_8BIT);
 
   // enable RXE, TXE and enable uart.
-  WriteReg(CR, 0x301);
+  WriteReg(CR(n), 0x301);
 
   // enable transmit and receive interrupts.
-  WriteReg(IMSC, INT_RX_ENABLE | INT_TX_ENABLE);
+  WriteReg(IMSC(n), INT_RX_ENABLE | INT_TX_ENABLE);
+
+  set_pinmode(14, ALT0);
+  set_pinmode(15, ALT0);
 
   initlock(&uart_tx_lock, "uart");
 }
@@ -118,9 +133,9 @@ uartputc_sync(int c)
   }
 
   // wait for ... TODO: comment */
-  while(ReadReg(FR) & FR_TXFF)
+  while(ReadReg(FR(0)) & FR_TXFF)
     ;
-  WriteReg(DR, c);
+  WriteReg(DR(0), c);
 
   pop_off();
 }
@@ -138,7 +153,7 @@ uartstart()
       return;
     }
     
-    if(ReadReg(FR) & FR_TXFF){
+    if(ReadReg(FR(0)) & FR_TXFF){
       // the UART transmit holding register is full,
       // so we cannot give it another byte.
       // it will interrupt when it's ready for a new byte.
@@ -151,7 +166,7 @@ uartstart()
     // maybe uartputc() is waiting for space in the buffer.
     wakeup(&uart_tx_r);
     
-    WriteReg(DR, c);
+    WriteReg(DR(0), c);
   }
 }
 
@@ -160,10 +175,10 @@ uartstart()
 int
 uartgetc(void)
 {
-  if(ReadReg(FR) & FR_RXFE)
+  if(ReadReg(FR(0)) & FR_RXFE)
     return -1;
   else
-    return ReadReg(DR);
+    return ReadReg(DR(0));
 }
 
 // handle a uart interrupt, raised because input has
@@ -186,5 +201,5 @@ uartintr(void)
   release(&uart_tx_lock);
 
   // clear transmit and receive interrupts.
-  WriteReg(ICR, INT_RX_ENABLE|INT_TX_ENABLE);
+  WriteReg(ICR(0), INT_RX_ENABLE|INT_TX_ENABLE);
 }

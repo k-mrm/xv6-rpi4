@@ -8,12 +8,10 @@
 // aarch64 Global Interrupt Controller (GICv2).
 //
 
-#define Reg(reg) ((volatile uint32 *)(GICV2 + (reg)))
-
 // GICD base
-#define RegD(reg)  Reg(reg)
+#define RegD(reg) ((volatile uint32 *)(GICDBASE + (reg)))
 // GICC base
-#define RegC(reg)  Reg((reg) + 0x10000)
+#define RegC(reg) ((volatile uint32 *)(GICCBASE + (reg)))
 
 #define D_CTLR          0x0
 #define D_TYPER         0x4
@@ -54,7 +52,6 @@ gicv2init()
 {
   gic_setup_ppi(TIMER0_IRQ);
   gic_setup_spi(UART0_IRQ);
-  gic_setup_spi(VIRTIO0_IRQ);
 }
 
 void

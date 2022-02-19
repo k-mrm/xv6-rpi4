@@ -114,13 +114,9 @@ devintr()
   if(irq == UART0_IRQ){
     uartintr();
     dev = 1;
-  } else if(irq == VIRTIO0_IRQ){
-    virtio_disk_intr();
-    dev = 1;
   } else if(irq == TIMER0_IRQ){
-    if(cpuid() == 0){
+    if(cpuid() == 0)
       clockintr();
-    }
     timerintr();
     dev = 2;
   } else if(irq == 1023){

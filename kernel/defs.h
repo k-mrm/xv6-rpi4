@@ -9,6 +9,7 @@ struct sleeplock;
 struct stat;
 struct superblock;
 struct trapframe;
+enum pinmode;
 
 // bio.c
 void            binit(void);
@@ -58,7 +59,7 @@ void            itrunc(struct inode*);
 // ramdisk.c
 void            ramdiskinit(void);
 void            ramdiskintr(void);
-void            ramdiskrw(struct buf*);
+void            ramdiskrw(struct buf*, int);
 
 // kalloc.c
 void*           kalloc(void);
@@ -146,7 +147,7 @@ extern struct spinlock tickslock;
 void            usertrapret(struct trapframe *);
 
 // uart.c
-void            uartinit(void);
+void            uartinit(int);
 void            uartintr(void);
 void            uartputc(int);
 void            uartputc_sync(int);
@@ -183,10 +184,10 @@ void            gic_eoi(uint32);
 void            timerinit(void);
 void            timerintr(void);
 
-// virtio_disk.c
-void            virtio_disk_init(void);
-void            virtio_disk_rw(struct buf *, int);
-void            virtio_disk_intr(void);
+// gpio.c
+void            set_pinmode(int pin, enum pinmode mode);
+void            gpio_clr(int pin);
+void            gpio_set(int pin);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))

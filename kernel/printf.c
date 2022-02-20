@@ -127,6 +127,12 @@ panic(char *s)
 }
 
 void
+printflkdisable()
+{
+  pr.locking = 0;
+}
+
+void
 printfinit(void)
 {
   initlock(&pr.lock, "pr");

@@ -34,8 +34,15 @@
 #define MAXVA (KERNBASE + (1ULL<<38))
 
 // rpi4 peripheral base address
-#define PERIPHERAL_BASE (KERNBASE + 0xfe000000L)
-//#define PERIPHERAL_BASE (KERNBASE + 0x3f000000L)
+#define RPI4_PERI_BASE  0xfe000000L
+#define RPI4_PERI_END   0x100000000L
+#define RPI3_PERI_BASE  0x3f000000L
+#define RPI3_PERI_END   0x40000000L
+
+#define PPERI_BASE      RPI4_PERI_BASE
+#define PPERI_END       RPI4_PERI_END
+#define PERIPHERAL_BASE P2V_WO(PPERI_BASE)
+//#define PERIPHERAL_BASE (PPERI_BASE)
 
 // rpi4 gpio
 #define GPIOBASE    (PERIPHERAL_BASE + 0x200000)
@@ -47,8 +54,8 @@
 #define TIMER0_IRQ    27
 
 // interrupt controller GICv2
-#define GICDBASE     (KERNBASE + 0xff841000)
-#define GICCBASE     (KERNBASE + 0xff842000)
+#define GICDBASE     P2V_WO(0xff841000)
+#define GICCBASE     P2V_WO(0xff842000)
 
 // map kernel stacks beneath the trampoline,
 // each surrounded by invalid guard pages.

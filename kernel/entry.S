@@ -18,6 +18,20 @@ hang:
         wfe
         b hang
 
+/*
+        // switch EL3 to EL2
+swtch_el2:
+        mov x0, #0x4b1    // RW=1, SMD=1, RES=1, NS=1
+        msr scr_el3, x0
+
+        adr x1, swtch_el1
+        msr elr_el3, x1
+
+        mov x2, #0x9      // EL2H
+        msr spsr_el3, x2
+        eret
+        */
+
         // switch EL2 to EL1
 swtch_el1:
         mov x0, #(1 << 31) 
@@ -33,14 +47,6 @@ swtch_el1:
         eret
 
 entry:
-/*
-        mrs x1, mpidr_el1
-        and x1, x1, #0x3
-        cbz x1, entry_prim    // primary
-        b hang    // secondary
-
-entry_prim:
-        */
         // clear .bss
         adrp x1, bss_start
         ldr w2, =bss_size
@@ -65,10 +71,10 @@ entry_prim:
 
         // Phase 1
         // map [0x80000,PA(end)) to [0x80000,PA(end))
-        adrp x0, l2entrypgt
+        adrp x0, l2entrypgt0
 
         mov x1, #0x80000
-        ldr x2, =V2P_WO(end)-1
+        ldr x2, =0x40000000-1
 
         lsr x3, x1, #PXSHIFT(2)
         and x3, x3, #PXMASK   // PX(2, x1)
@@ -77,7 +83,7 @@ entry_prim:
         mov x5, #(PTE_AF | PTE_INDX(AI_NORMAL_NC_IDX) | PTE_VALID) // entry attr
         orr x6, x1, x5      // block entry
 l2epgt_loop:
-        str x6, [x0, x3, lsl #3]  // l2entrypgt[l2idx] = block entry
+        str x6, [x0, x3, lsl #3]  // l2entrypgt0[l2idx] = block entry
         add x3, x3, #1          // next index
         add x6, x6, #0x200000   // next block, block size is 2MB
         cmp x3, x4
@@ -89,7 +95,7 @@ l2epgt_loop:
         and x3, x3, #PXMASK     // start va level1 index
 
         mov x4, #(PTE_TABLE | PTE_VALID)  // entry attr
-        adrp x5, l2entrypgt
+        adrp x5, l2entrypgt0
         orr x6, x4, x5    // table entry
 
         str x6, [x0, x3, lsl #3]    // l1entrypgt[l1idx] = table entry
@@ -98,8 +104,8 @@ l2epgt_loop:
         // map [0xffffff8000080000,VA(end)) to [0x80000,PA(end))
         adrp x0, l2kpgt
 
-        mov x1, #0x80000   // start pa
-        ldr x2, =V2P_WO(end)-1   // end pa
+        mov x1, #0x80000        // start pa
+        ldr x2, =0x40000000-1   // end pa
         mov x3, #KERNBASE
         add x4, x1, x3    // start va
         add x5, x2, x3    // end va
@@ -111,12 +117,13 @@ l2epgt_loop:
         mov x8, #(PTE_AF | PTE_INDX(AI_NORMAL_NC_IDX) | PTE_VALID) // entry attr
         orr x9, x1, x8      // block entry
 l2kpgt_loop:
-        str x9, [x0, x6, lsl #3]  // l2entrypgt[l2idx] = block entry
+        str x9, [x0, x6, lsl #3]  // l2kpgt[l2idx] = block entry
         add x6, x6, #1          // next index
         add x9, x9, #0x200000   // next block, block size is 2MB
         cmp x6, x7
         b.ls l2kpgt_loop    // if start va idx <= end va idx
 
+        // setup l1kpgt
         adrp x0, l1kpgt
 
         lsr x5, x4, #PXSHIFT(1)
@@ -124,6 +131,41 @@ l2kpgt_loop:
 
         mov x6, #(PTE_TABLE | PTE_VALID)  // entry attr
         adrp x7, l2kpgt
+        orr x8, x6, x7    // table entry
+
+        str x8, [x0, x5, lsl #3]    // l1kpgt[l1idx] = table entry
+
+        // map peripheral
+        // map [PERIPHERAL_BASE, VA(PPERI_END)) to [PPERI_BASE, PPERI_END)
+        adrp x0, l2kpgt1
+
+        mov x1, #PPERI_BASE // start pa
+        ldr x2, =PPERI_END-1  // end pa
+        mov x3, #KERNBASE
+        add x4, x1, x3    // start va
+        add x5, x2, x3    // end va
+
+        lsr x6, x4, #PXSHIFT(2)
+        and x6, x6, #PXMASK   // x6 = PX(2,x4)
+        lsr x7, x5, #PXSHIFT(2)
+        and x7, x7, #PXMASK   // x7 = PX(2,x5)
+        mov x8, #(PTE_AF | PTE_INDX(AI_DEVICE_nGnRnE_IDX) | PTE_VALID) // entry attr
+        orr x9, x1, x8      // block entry
+l2kpgt_loop1:
+        str x9, [x0, x6, lsl #3]  // l2kpgt1[l2idx] = block entry
+        add x6, x6, #1            // next index
+        add x9, x9, #0x200000     // next block, block size is 2MB
+        cmp x6, x7
+        b.ls l2kpgt_loop1    // if start va idx <= end va idx
+
+        // setup l1kpgt
+        adrp x0, l1kpgt
+
+        lsr x5, x4, #PXSHIFT(1)
+        and x5, x5, #PXMASK  // x5 = PX(1,x4)
+
+        mov x6, #(PTE_TABLE | PTE_VALID)  // entry attr
+        adrp x7, l2kpgt1
         orr x8, x6, x7    // table entry
 
         str x8, [x0, x5, lsl #3]    // l1kpgt[l1idx] = table entry

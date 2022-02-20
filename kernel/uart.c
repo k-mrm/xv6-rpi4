@@ -135,7 +135,7 @@ uartputc_sync(int c)
   // wait for ... TODO: comment */
   while(ReadReg(FR(0)) & FR_TXFF)
     ;
-  WriteReg(DR(0), c);
+  WriteReg(DR(0), c & 0xff);
 
   pop_off();
 }
@@ -166,7 +166,7 @@ uartstart()
     // maybe uartputc() is waiting for space in the buffer.
     wakeup(&uart_tx_r);
     
-    WriteReg(DR(0), c);
+    WriteReg(DR(0), c & 0xff);
   }
 }
 
@@ -178,7 +178,7 @@ uartgetc(void)
   if(ReadReg(FR(0)) & FR_RXFE)
     return -1;
   else
-    return ReadReg(DR(0));
+    return ReadReg(DR(0)) & 0xff;
 }
 
 // handle a uart interrupt, raised because input has

@@ -20,9 +20,10 @@ start()
 }
 
 __attribute__((aligned(PGSIZE))) pte_t l1entrypgt[512];
-__attribute__((aligned(PGSIZE))) pte_t l2entrypgt[512];
+__attribute__((aligned(PGSIZE))) pte_t l2entrypgt0[512];
 __attribute__((aligned(PGSIZE))) pte_t l1kpgt[512];
-__attribute__((aligned(PGSIZE))) pte_t l2kpgt[512];
+__attribute__((aligned(PGSIZE))) pte_t l2kpgt[512]; /* (0x80000~) */
+__attribute__((aligned(PGSIZE))) pte_t l2kpgt1[512];  /* (0xfe000000~) */
 
 /*
 void

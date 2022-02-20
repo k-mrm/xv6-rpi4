@@ -171,9 +171,13 @@ CPUS := 4
 endif
 
 QEMUOPTS = -cpu cortex-a72 -machine raspi3 -kernel $K/kernel -m 1G -smp $(CPUS) -nographic
+QEMUTOPTS = -cpu cortex-a72 -machine raspi3 -kernel $T/hwtest -m 1G -smp $(CPUS) -nographic
 
 qemu: kernel8.img
 	$(QEMU) $(QEMUOPTS)
+
+qemu-test: hwtest.img
+	$(QEMU) $(QEMUTOPTS)
 
 rpi4: kernel8.img
 	cp kernel8.img $(SDPATH)
@@ -184,7 +188,14 @@ test: hwtest.img
 .gdbinit: .gdbinit.tmpl-aarch64
 	sed "s/:1234/:$(GDBPORT)/" < $^ > $@
 
+.gdbinit-test: .gdbinit.tmpl-aarch64-test
+	sed "s/:1234/:$(GDBPORT)/" < $^ > $@
+
 qemu-gdb: $K/kernel .gdbinit fs.img
 	@echo "*** Now run 'gdb' in another window." 1>&2
 	$(QEMU) $(QEMUOPTS) -S $(QEMUGDB)
+
+test-gdb: hwtest.img .gdbinit-test
+	@echo "*** Now run 'gdb' in another window." 1>&2
+	$(QEMU) $(QEMUTOPTS) -S $(QEMUGDB)
 

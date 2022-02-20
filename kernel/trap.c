@@ -80,7 +80,6 @@ kerneltrap()
     panic("kerneltrap: interrupts enabled");
 
   if((which_dev = devintr()) == 0){
-    printflkdisable();
     printf("esr %p\n", esr);
     printf("elr=%p far=%p\n", r_elr_el1(), r_far_el1());
     panic("kerneltrap");

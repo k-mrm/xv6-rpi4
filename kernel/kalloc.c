@@ -39,11 +39,9 @@ kinit2(void *vstart, void *vend)
 void
 freerange(void *vstart, void *vend)
 {
-  printf("freerange");
   char *p;
   p = (char*)PGROUNDUP((uint64)vstart);
   for(; p + PGSIZE <= (char*)vend; p += PGSIZE) {
-    printf("%p ", p);
     kfree(p);
   }
 }

@@ -137,6 +137,8 @@ consoleintr(int c)
 {
   acquire(&cons.lock);
 
+  printf("consoleintr!\n");
+
   switch(c){
   case C('P'):  // Print process list.
     procdump();

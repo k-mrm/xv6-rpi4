@@ -15,20 +15,19 @@ main()
 {
   if(cpuid() == 0){
     consoleinit();
+    printfinit();
     trapinit();      // trap vectors
     trapinithart();  // install trap vector
-    //char *s = "chompppppppppppp";
-    printf("%p111", mycpu());
-    printfinit();
-    printf("%p222", mycpu());
-    kinit1(end, (void*)SECTROUNDUP(KERNLINK));  // physical page allocator
-    printf("%p33", mycpu());
+    printf("helloxv6\n");
+    //kinit1(end, (void*)SECTROUNDUP(KERNLINK));  // physical page allocator
+    kinit1(end, P2V(PHYSTOP));  // physical page allocator
+    printf("!!!!!!done\n");
     kvminit();       // create kernel page table
-    printf("%paa", mycpu());
     kvminithart();   // turn on paging
-    printf("%pcc", mycpu());
-    kinit2((void*)SECTROUNDUP(KERNLINK), P2V(PHYSTOP));
-    printf("%pcsex", mycpu());
+    //kinit2((void*)SECTROUNDUP(KERNLINK), P2V(PHYSTOP));
+    *(volatile char *)0x19 = 'a';
+    printf("%p ", r_ttbr0_el1());
+    printf("%d", *(volatile char *)0x19);
     printf("\n");
     printf("xv6 kernel is booting\n");
     printf("\n");

@@ -20,6 +20,8 @@ main()
     printf("\n");
     printf("xv6 kernel is booting\n");
     printf("\n");
+    cpu1_wakeup(V2P(_entry));
+    __sync_synchronize();
     trapinit();      // trap vectors
     trapinithart();  // install trap vector
     //kinit1(end, (void*)SECTROUNDUP(KERNLINK));  // physical page allocator
@@ -36,7 +38,6 @@ main()
     fileinit();      // file table
     ramdiskinit();
     userinit();      // first user process
-    cpu1_wakeup(V2P(_entry));
     __sync_synchronize();
     started = 1;
   } else {

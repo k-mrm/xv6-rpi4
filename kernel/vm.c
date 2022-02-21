@@ -58,6 +58,8 @@ kvminithart()
   w_ttbr1_el1(V2P(kernel_pagetable));
   w_ttbr0_el1(0);
   flush_tlb();
+
+  isb();
 }
 
 // Return the address of the PTE in page table pagetable

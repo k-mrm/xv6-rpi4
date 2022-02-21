@@ -11,8 +11,8 @@
 _entry:
         mrs x1, mpidr_el1
         and x1, x1, #3
-        cbz x1, swtch_el1
-        b hang
+        cbz x1, swtch_el1_primary   // primary
+        b swtch_el1_secondary
 
 hang:
         wfe
@@ -33,12 +33,26 @@ swtch_el2:
         */
 
         // switch EL2 to EL1
-swtch_el1:
+swtch_el1_primary:
         mov x0, #(1 << 31) 
         orr x0, x0, #(1 << 1)
         msr hcr_el2, x0
 
         adr x1, entry
+        msr elr_el2, x1
+
+        mov x2, #0x3c5  // DAIF=0b1111, M=0b101(EL1H)
+        msr spsr_el2, x2
+
+        eret
+
+        // switch EL2 to EL1
+swtch_el1_secondary:
+        mov x0, #(1 << 31) 
+        orr x0, x0, #(1 << 1)
+        msr hcr_el2, x0
+
+        adr x1, entryothers
         msr elr_el2, x1
 
         mov x2, #0x3c5  // DAIF=0b1111, M=0b101(EL1H)
@@ -73,8 +87,8 @@ entry:
         // map [0x80000,PA(end)) to [0x80000,PA(end))
         adrp x0, l2entrypgt0
 
-        mov x1, #0x80000
-        ldr x2, =0x40000000-1
+        mov x1, #0x80000        // start pa
+        ldr x2, =0x40000000-1   // end pa
 
         lsr x3, x1, #PXSHIFT(2)
         and x3, x3, #PXMASK   // PX(2, x1)
@@ -214,3 +228,17 @@ _start:
         b main
 
         b .   // spin
+
+/*
+cpu1_on:
+        mov x0, #0xe0
+        adr x1, _entry
+        str x1, [x0]
+
+        isb
+        dsb sy
+
+        sev
+
+        ret
+        */

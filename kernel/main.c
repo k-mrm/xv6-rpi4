@@ -9,12 +9,16 @@ extern char end[];  // first address after kernel loaded from ELF file
 
 void _entry(void);
 void cpu1_wakeup(uint64 entry);
+void cpu2_wakeup(uint64 entry);
+void cpu3_wakeup(uint64 entry);
 
 // start() jumps here in EL1 on all CPUs.
 void
 main()
 {
   if(cpuid() == 0){
+    trapinit();      // trap vectors
+    trapinithart();  // install trap vector
     consoleinit();
     printfinit();
     printf("\n");
@@ -22,8 +26,6 @@ main()
     printf("\n");
     cpu1_wakeup(V2P(_entry));
     __sync_synchronize();
-    trapinit();      // trap vectors
-    trapinithart();  // install trap vector
     //kinit1(end, (void*)SECTROUNDUP(KERNLINK));  // physical page allocator
     kinit1(end, P2V(PHYSTOP));  // physical page allocator
     kvminit();       // create kernel page table

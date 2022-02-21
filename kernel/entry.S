@@ -87,14 +87,14 @@ entry:
         // map [0x80000,PA(end)) to [0x80000,PA(end))
         adrp x0, l2entrypgt0
 
-        mov x1, #0x80000        // start pa
+        mov x1, #0x0            // start pa
         ldr x2, =0x40000000-1   // end pa
 
         lsr x3, x1, #PXSHIFT(2)
         and x3, x3, #PXMASK   // PX(2, x1)
         lsr x4, x2, #PXSHIFT(2)
         and x4, x4, #PXMASK   // PX(2, x2)
-        mov x5, #(PTE_AF | PTE_INDX(AI_NORMAL_NC_IDX) | PTE_VALID) // entry attr
+        mov x5, #(PTE_AF | PTE_NORMAL | PTE_VALID) // entry attr
         orr x6, x1, x5      // block entry
 l2epgt_loop:
         str x6, [x0, x3, lsl #3]  // l2entrypgt0[l2idx] = block entry
@@ -118,7 +118,7 @@ l2epgt_loop:
         // map [0xffffff8000080000,VA(end)) to [0x80000,PA(end))
         adrp x0, l2kpgt
 
-        mov x1, #0x80000        // start pa
+        mov x1, #0x0            // start pa
         ldr x2, =0x40000000-1   // end pa
         mov x3, #KERNBASE
         add x4, x1, x3    // start va
@@ -128,7 +128,7 @@ l2epgt_loop:
         and x6, x6, #PXMASK   // x6 = PX(2,x4)
         lsr x7, x5, #PXSHIFT(2)
         and x7, x7, #PXMASK   // x7 = PX(2,x5)
-        mov x8, #(PTE_AF | PTE_INDX(AI_NORMAL_NC_IDX) | PTE_VALID) // entry attr
+        mov x8, #(PTE_AF | PTE_NORMAL | PTE_VALID) // entry attr
         orr x9, x1, x8      // block entry
 l2kpgt_loop:
         str x9, [x0, x6, lsl #3]  // l2kpgt[l2idx] = block entry
@@ -163,7 +163,7 @@ l2kpgt_loop:
         and x6, x6, #PXMASK   // x6 = PX(2,x4)
         lsr x7, x5, #PXSHIFT(2)
         and x7, x7, #PXMASK   // x7 = PX(2,x5)
-        mov x8, #(PTE_AF | PTE_INDX(AI_DEVICE_nGnRnE_IDX) | PTE_VALID) // entry attr
+        mov x8, #(PTE_AF | PTE_DEVICE | PTE_VALID) // entry attr
         orr x9, x1, x8      // block entry
 l2kpgt_loop1:
         str x9, [x0, x6, lsl #3]  // l2kpgt1[l2idx] = block entry
@@ -196,7 +196,7 @@ entryothers:  // secondary CPU starts here
         msr tcr_el1, x0
 
         // setup mair
-        ldr x1, =((MT_DEVICE_nGnRnE<<(8*AI_DEVICE_nGnRnE_IDX)) | (MT_NORMAL_NC<<(8*AI_NORMAL_NC_IDX)))
+        ldr x1, =((MT_DEVICE_nGnRnE<<(8*AI_DEVICE_nGnRnE_IDX)) | (MT_NORMAL_NC<<(8*AI_NORMAL_NC_IDX)) | (MT_NORMAL_CACHE<<(8*AI_NORMAL_CACHE_IDX)))
         msr mair_el1, x1
 
         isb
@@ -206,6 +206,7 @@ entryothers:  // secondary CPU starts here
         // enable paging
         mrs x0, sctlr_el1
         orr x0, x0, #1
+        orr x0, x0, #4
         msr sctlr_el1, x0
 
         br x1       // jump to higher address (0xffffff8000000000~)
@@ -228,17 +229,3 @@ _start:
         b main
 
         b .   // spin
-
-/*
-cpu1_on:
-        mov x0, #0xe0
-        adr x1, _entry
-        str x1, [x0]
-
-        isb
-        dsb sy
-
-        sev
-
-        ret
-        */

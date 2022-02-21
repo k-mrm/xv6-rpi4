@@ -389,6 +389,7 @@ scheduler(void)
 {
   struct proc *p;
   struct cpu *c = mycpu();
+  // printf("%d scheduler\n", cpuid());
 
   c->proc = 0;
   for(;;){

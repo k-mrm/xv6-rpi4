@@ -11,8 +11,6 @@ struct superblock;
 struct trapframe;
 enum pinmode;
 
-void printflkdisable(void);
-
 // bio.c
 void            binit(void);
 struct buf*     bread(uint, uint);

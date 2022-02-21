@@ -25,6 +25,7 @@ void
 trapinithart(void)
 {
   w_vbar_el1((uint64)alltraps);
+  __sync_synchronize();
 }
 
 //

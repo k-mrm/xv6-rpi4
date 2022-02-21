@@ -29,9 +29,17 @@ acquire(struct spinlock *lk)
   //   a5 = 1
   //   s1 = &lk->locked
   //   amoswap.w.aq a5, a5, (s1)
-  //while(__sync_lock_test_and_set(&lk->locked, 1) != 0)
-    //;
-  lk->locked = 1;
+  /*
+  asm volatile(
+    "mov x1, %0\n"
+    "mov w2, #1\n"
+    "1: ldaxr w3, [x1]\n"
+    "cbnz w3, 1b\n"
+    "stxr w3, w2, [x1]\n"
+    "cbnz w3, 1b\n"
+    :: "r"(&lk->locked)
+  ); */
+  while(__atomic_exchange_n(&lk->locked, 1, __ATOMIC_ACQ_REL) == 1);
 
   // Tell the C compiler and the processor to not move loads or stores
   // past this point, to ensure that the critical section's memory
@@ -57,18 +65,13 @@ release(struct spinlock *lk)
   // section are visible to other CPUs before the lock is released,
   // and that loads in the critical section occur strictly before
   // the lock is released.
-  // On RISC-V, this emits a fence instruction.
   __sync_synchronize();
 
   // Release the lock, equivalent to lk->locked = 0.
   // This code doesn't use a C assignment, since the C standard
   // implies that an assignment might be implemented with
   // multiple store instructions.
-  // On RISC-V, sync_lock_release turns into an atomic swap:
-  //   s1 = &lk->locked
-  //   amoswap.w zero, zero, (s1)
-  //__sync_lock_release(&lk->locked);
-  lk->locked = 0;
+  asm volatile("str wzr, %0" : "=m"(lk->locked) :: "memory");
 
   pop_off();
 }

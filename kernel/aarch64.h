@@ -238,14 +238,17 @@ typedef uint64 *pagetable_t; // 512 PTEs
 // index is set by mair_el1
 #define AI_DEVICE_nGnRnE_IDX  0x0
 #define AI_NORMAL_NC_IDX      0x1
+#define AI_NORMAL_CACHE_IDX   0x2
 
 // memory type
 #define MT_DEVICE_nGnRnE  0x0
 #define MT_NORMAL_NC      0x44
+#define MT_NORMAL_CACHE   0xff
 
-#define PTE_INDX(i) (((i) & 7) << 2)
-#define PTE_DEVICE  PTE_INDX(AI_DEVICE_nGnRnE_IDX)
-#define PTE_NORMAL  PTE_INDX(AI_NORMAL_NC_IDX)
+#define PTE_INDX(i)   (((i) & 7) << 2)
+#define PTE_DEVICE    PTE_INDX(AI_DEVICE_nGnRnE_IDX)
+#define PTE_NORMAL_NC PTE_INDX(AI_NORMAL_NC_IDX)
+#define PTE_NORMAL    PTE_INDX(AI_NORMAL_CACHE_IDX)
 
 // shift a physical address to the right place for a PTE.
 #define PA2PTE(pa)  ((uint64)(pa) & 0xfffffffff000)

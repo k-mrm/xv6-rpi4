@@ -20,6 +20,23 @@ cpu1_wakeup(uint64 entry)
 }
 
 void
+cpu2_wakeup(uint64 entry)
+{
+  *(volatile uint64 *)0xe8 = entry;
+  __sync_synchronize();
+  asm volatile("sev");
+}
+
+
+void
+cpu3_wakeup(uint64 entry)
+{
+  *(volatile uint64 *)0xf0 = entry;
+  __sync_synchronize();
+  asm volatile("sev");
+}
+
+void
 start()
 {
   main();

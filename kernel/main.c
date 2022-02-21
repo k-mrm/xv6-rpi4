@@ -16,9 +16,11 @@ main()
   if(cpuid() == 0){
     consoleinit();
     printfinit();
+    printf("\n");
+    printf("xv6 kernel is booting\n");
+    printf("\n");
     trapinit();      // trap vectors
     trapinithart();  // install trap vector
-    printf("helloxv6\n");
     //kinit1(end, (void*)SECTROUNDUP(KERNLINK));  // physical page allocator
     kinit1(end, P2V(PHYSTOP));  // physical page allocator
     printf("!!!!!!done\n");
@@ -28,9 +30,6 @@ main()
     *(volatile char *)0x19 = 'a';
     printf("%p ", r_ttbr0_el1());
     printf("%d", *(volatile char *)0x19);
-    printf("\n");
-    printf("xv6 kernel is booting\n");
-    printf("\n");
     procinit();      // process table
     gicv2init();     // set up interrupt controller
     gicv2inithart();

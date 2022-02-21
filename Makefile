@@ -29,8 +29,6 @@ OBJS = \
   $K/exec.o \
   $K/sysfile.o \
   $K/trapasm.o \
-  $K/kernelvec.o \
-  $K/uservec.o \
   $K/timer.o \
   $K/gicv2.o \
 	$K/gpio.o \

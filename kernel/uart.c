@@ -14,6 +14,7 @@
 // pl011
 #define DR(n)    (UART(n) + 0x00)
 #define FR(n)    (UART(n) + 0x18)
+#define FR_BUSY (1<<3)
 #define FR_RXFE (1<<4)  // recieve fifo empty
 #define FR_TXFF (1<<5)  // transmit fifo full
 #define FR_RXFF (1<<6)  // recieve fifo full
@@ -24,9 +25,11 @@
 #define LCRH_FEN        (1<<4)
 #define LCRH_WLEN_8BIT  (3<<5)
 #define CR(n)    (UART(n) + 0x30)
+#define IFLS(n)  (UART(n) + 0x34)
 #define IMSC(n)  (UART(n) + 0x38)
 #define INT_RX_ENABLE (1<<4)
 #define INT_TX_ENABLE (1<<5)
+#define MIS(n)   (UART(n) + 0x40)
 #define ICR(n)   (UART(n) + 0x44)
 
 #define UART_FREQ 48000000ull
@@ -64,6 +67,9 @@ uartinit(int n)
 {
   // disable uart
   WriteReg(CR(n), 0);
+  WriteReg(LCRH(n), 0);
+
+  WriteReg(IFLS(n), 0);
 
   // disable interrupts.
   WriteReg(IMSC(n), 0);
@@ -71,9 +77,9 @@ uartinit(int n)
   // set baudrate.
   set_uart_baudrate(n, 115200);
 
-  // enable FIFOs.
+  // FIFO?
   // set word length to 8 bits, no parity.
-  WriteReg(LCRH(n), LCRH_FEN | LCRH_WLEN_8BIT);
+  WriteReg(LCRH(n), LCRH_WLEN_8BIT);
 
   // enable RXE, TXE and enable uart.
   WriteReg(CR(n), 0x301);
@@ -181,24 +187,41 @@ uartgetc(void)
     return ReadReg(DR(0)) & 0xff;
 }
 
+int
+uartbusy(void)
+{
+  if(ReadReg(FR(0)) & FR_BUSY)
+    return 1;
+  else
+    return 0;
+}
+
 // handle a uart interrupt, raised because input has
 // arrived, or the uart is ready for more output, or
 // both. called from trap.c.
 void
 uartintr(void)
 {
+  int status = ReadReg(MIS(0));
+
   // read and process incoming characters.
-  while(1){
-    int c = uartgetc();
-    if(c == -1)
-      break;
-    consoleintr(c);
+  if(status & INT_RX_ENABLE) {
+    while(uartbusy())
+      ;
+    for(;;) {
+      int c = uartgetc();
+      if(c < 0)
+        break;
+      consoleintr(c);
+    }
   }
 
-  // send buffered characters.
-  acquire(&uart_tx_lock);
-  uartstart();
-  release(&uart_tx_lock);
+  if(status & INT_TX_ENABLE) {
+    // send buffered characters.
+    acquire(&uart_tx_lock);
+    uartstart();
+    release(&uart_tx_lock);
+  }
 
   // clear transmit and receive interrupts.
   WriteReg(ICR(0), INT_RX_ENABLE|INT_TX_ENABLE);

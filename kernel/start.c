@@ -13,6 +13,14 @@ __attribute__ ((aligned (16))) char stack0[4096 * NCPU];
 
 // entry.S jumps here in supervisor mode (EL1) on stack0.
 // in qemu-system-aarch64, default EL (Exeception Level) is 1.
+
+void
+cpu1_wakeup(uint64 entry)
+{
+  *(volatile uint64 *)0xd8 = entry;
+  asm volatile("sev");
+}
+
 void
 start()
 {

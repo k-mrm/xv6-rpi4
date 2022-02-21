@@ -72,6 +72,8 @@ usertrap(void)
 
   if(p->killed)
     exit(-1);
+
+  intr_off();
 }
 
 // interrupts and exceptions from kernel code go here via kernelvec,
@@ -85,7 +87,9 @@ kerneltrap()
   if(intr_get() != 0)
     panic("kerneltrap: interrupts enabled");
 
-  printf("esr %p\n", esr);
+  uint64 ec = (esr >> 26) & 0x3f;
+  uint64 iss = esr & 0x1ffffff;
+  printf("esr %p %p %p\n", esr, ec, iss);
   printf("elr=%p far=%p\n", r_elr_el1(), r_far_el1());
   panic("kerneltrap");
 }

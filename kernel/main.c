@@ -8,6 +8,7 @@ volatile static int started = 0;
 extern char end[];  // first address after kernel loaded from ELF file
 
 void _entry(void);
+void cpu1_wakeup(uint64 entry);
 
 // start() jumps here in EL1 on all CPUs.
 void
@@ -23,13 +24,9 @@ main()
     trapinithart();  // install trap vector
     //kinit1(end, (void*)SECTROUNDUP(KERNLINK));  // physical page allocator
     kinit1(end, P2V(PHYSTOP));  // physical page allocator
-    printf("!!!!!!done\n");
     kvminit();       // create kernel page table
     kvminithart();   // turn on paging
     //kinit2((void*)SECTROUNDUP(KERNLINK), P2V(PHYSTOP));
-    *(volatile char *)0x19 = 'a';
-    printf("%p ", r_ttbr0_el1());
-    printf("%d", *(volatile char *)0x19);
     procinit();      // process table
     gicv2init();     // set up interrupt controller
     gicv2inithart();
@@ -39,6 +36,7 @@ main()
     fileinit();      // file table
     ramdiskinit();
     userinit();      // first user process
+    cpu1_wakeup(V2P(_entry));
     __sync_synchronize();
     started = 1;
   } else {

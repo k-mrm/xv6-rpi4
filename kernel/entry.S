@@ -192,7 +192,7 @@ entryothers:  // secondary CPU starts here
         msr ttbr1_el1, x1
 
         // setup tcr
-        ldr x0, =(TCR_T0SZ(25)|TCR_T1SZ(25)|TCR_TG0(0)|TCR_TG1(2)|TCR_IPS(0))
+        ldr x0, =(TCR_T0SZ(25)|TCR_T1SZ(25)|TCR_TG0(0)|TCR_TG1(2)|TCR_IPS(0)|TCR_IRGN0(1)|TCR_ORGN0(1)|TCR_SH0(0)|TCR_IRGN1(1)|TCR_ORGN1(1)|TCR_SH1(0))
         msr tcr_el1, x0
 
         // setup mair
@@ -205,8 +205,9 @@ entryothers:  // secondary CPU starts here
 
         // enable paging
         mrs x0, sctlr_el1
-        orr x0, x0, #1
-        orr x0, x0, #4
+        orr x0, x0, #(1<<0)   // M
+        orr x0, x0, #(1<<2)   // C
+        orr x0, x0, #(1<<12)  // I
         msr sctlr_el1, x0
 
         br x1       // jump to higher address (0xffffff8000000000~)

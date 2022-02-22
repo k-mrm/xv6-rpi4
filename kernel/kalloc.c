@@ -41,9 +41,8 @@ freerange(void *vstart, void *vend)
 {
   char *p;
   p = (char*)PGROUNDUP((uint64)vstart);
-  for(; p + PGSIZE <= (char*)vend; p += PGSIZE) {
+  for(; p + PGSIZE <= (char*)vend; p += PGSIZE)
     kfree(p);
-  }
 }
 
 // Free the page of physical memory pointed at by v,
@@ -84,6 +83,6 @@ kalloc(void)
   release(&kmem.lock);
 
   if(r)
-    memset((char*)r, 5, PGSIZE); // fill with junk
+    memset((char*)r, 0, PGSIZE); // fill with junk
   return (void*)r;
 }

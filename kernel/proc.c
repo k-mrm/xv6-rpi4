@@ -405,6 +405,14 @@ scheduler(void)
         p->state = RUNNING;
         c->proc = p;
         switchuvm(p);
+        char* ka = (char *)uva2ka(p->pagetable, 0);
+        printf("entry proc %p\n", p->trapframe->elr);
+        printf("%p ka %p ", p->trapframe, ka);
+        for(int i = 0; i < 128; i++)
+          printf("%x ", ka[i]);
+        char *v = (char*)p->trapframe->elr;
+        for(int i = 0; i < 128; i++)
+          printf("%x ", v[i]);
         swtch(&c->context, &p->context);
 
         switchkvm();
@@ -475,6 +483,8 @@ forkret(void)
     first = 0;
     fsinit(ROOTDEV);
   }
+
+  printf("tf %p", tf);
 
   usertrapret(tf);
 }

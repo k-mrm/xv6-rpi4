@@ -263,6 +263,8 @@ switchuvm(struct proc *p)
 
   w_ttbr0_el1(V2P(p->pagetable));
   flush_tlb();
+
+  __sync_synchronize();
 }
 
 void
@@ -270,6 +272,8 @@ switchkvm(void)
 {
   w_ttbr0_el1(0);
   flush_tlb();
+
+  __sync_synchronize();
 }
 
 // Deallocate user pages to bring the process size from oldsz to

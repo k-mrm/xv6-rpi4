@@ -11,6 +11,7 @@ uint ticks;
 
 // in trapvec.S, calls kerneltrap() or usertrap().
 void alltraps();
+void dump_tf(struct trapframe *tf);
 
 extern int devintr();
 
@@ -50,12 +51,11 @@ userirq(void)
 }
 
 void
-usertrap(void)
+usertrap(struct trapframe *tf)
 {
   struct proc *p = myproc();
 
   uint64 ec = (r_esr_el1() >> 26) & 0x3f;
-  w_esr_el1(0);
   if(ec == 21){
     // system call
 
@@ -66,7 +66,8 @@ usertrap(void)
 
     syscall();
   } else {
-    printf("usertrap(): unexpected ec %p pid=%d\n", r_esr_el1(), p->pid);
+    dump_tf(tf);
+    printf("usertrap(): unexpected ec %p %p pid=%d\n", ec, r_esr_el1(), p->pid);
     printf("            elr=%p far=%p\n", r_elr_el1(), r_far_el1());
     p->killed = 1;
   }
@@ -83,7 +84,6 @@ void
 kerneltrap()
 {
   uint64 esr = r_esr_el1();
-  w_esr_el1(0);
   
   if(intr_get() != 0)
     panic("kerneltrap: interrupts enabled");
@@ -145,3 +145,17 @@ devintr()
   return dev;
 }
 
+void
+dump_tf(struct trapframe *tf)
+{
+  printf("trapframe dump: %p\n", tf);
+  printf("x0 %p x1 %p x2 %p x3 %p\n", tf->x0, tf->x1, tf->x2, tf->x3);
+  printf("x4 %p x5 %p x6 %p x7 %p\n", tf->x4, tf->x5, tf->x6, tf->x7);
+  printf("x8 %p x9 %p x10 %p x11 %p\n", tf->x8, tf->x9, tf->x10, tf->x11);
+  printf("x12 %p x13 %p x14 %p x15 %p\n", tf->x12, tf->x13, tf->x14, tf->x15);
+  printf("x16 %p x17 %p x18 %p x19 %p\n", tf->x16, tf->x17, tf->x18, tf->x19);
+  printf("x20 %p x21 %p x22 %p x23 %p\n", tf->x20, tf->x21, tf->x22, tf->x23);
+  printf("x24 %p x25 %p x26 %p x27 %p\n", tf->x24, tf->x25, tf->x26, tf->x27);
+  printf("x28 %p x29 %p x30 %p elr %p\n", tf->x28, tf->x29, tf->x30, tf->elr);
+  printf("spsr %p sp %p\n", tf->spsr, tf->sp);
+}

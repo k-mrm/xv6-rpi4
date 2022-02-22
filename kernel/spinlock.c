@@ -39,7 +39,10 @@ acquire(struct spinlock *lk)
     "cbnz w3, 1b\n"
     :: "r"(&lk->locked)
   ); */
-  while(__atomic_exchange_n(&lk->locked, 1, __ATOMIC_ACQ_REL) == 1);
+  // while(__atomic_exchange_n(&lk->locked, 1, __ATOMIC_ACQ_REL) == 1);
+  while(lk->locked)
+    ;
+  lk->locked = 1;
 
   // Tell the C compiler and the processor to not move loads or stores
   // past this point, to ensure that the critical section's memory

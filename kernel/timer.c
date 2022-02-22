@@ -44,7 +44,7 @@ static void
 reload_timer()
 {
   // interval 100ms
-  uint64 interval = 100000;
+  uint64 interval = 1000000;
   uint64 interval_clk = interval * (r_cntfrq_el0() / 1000000);
 
   w_cntv_tval_el0(interval_clk);

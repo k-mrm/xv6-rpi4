@@ -156,7 +156,7 @@ clean:
         $U/usys.S \
 	$(UPROGS)
 
-SDPATH = /media/k-mrm/09D0-F0A8/
+SDPATH = /media/k-mrm/BOOT/
 
 # try to generate a unique GDB port
 GDBPORT = $(shell expr `id -u` % 5000 + 25000)

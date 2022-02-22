@@ -197,6 +197,8 @@ uvmunmap(pagetable_t pagetable, uint64 va, uint64 npages, int do_free)
     }
     *pte = 0;
   }
+
+  flush_tlb();
 }
 
 // create an empty user page table.
@@ -269,17 +271,10 @@ switchuvm(struct proc *p)
 
   w_ttbr0_el1(ttbr0);
 
-  dsb(nsh);
+  dsb(sy);
   isb();
 
   printf("ittbr0 %p ", r_ttbr0_el1());
-
-  // flush_tlb();
-
-  // asm volatile("ic iallu" ::: "memory");
-
-  dsb(nsh);
-  isb();
 }
 
 void
@@ -479,4 +474,12 @@ copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
   } else {
     return -1;
   }
+}
+
+extern void cache_flush(void *start, void *end);
+
+void
+cpu_sync_cache(void *va, uint64 sz)
+{
+  cache_flush((char *)va, (char *)va+sz);
 }

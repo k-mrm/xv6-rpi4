@@ -197,7 +197,7 @@ static inline void
 flush_tlb()
 {
   asm volatile("dsb ishst");
-  asm volatile("tlbi vmalle1");
+  asm volatile("tlbi vmalle1is");
   asm volatile("dsb ish");
   isb();
 }
@@ -259,7 +259,7 @@ typedef uint64 *pagetable_t; // 512 PTEs
 
 #define PTE_INDX(i)   (((i) & 7) << 2)
 #define PTE_DEVICE    (PTE_INDX(AI_DEVICE_nGnRnE_IDX)|PTE_SH_INNER)
-#define PTE_NORMAL_NC PTE_INDX(AI_NORMAL_NC_IDX)
+#define PTE_NORMAL_NC PTE_INDX(AI_NORMAL_NC_IDX)|PTE_SH_INNER
 #define PTE_NORMAL    (PTE_INDX(AI_NORMAL_CACHE_IDX)|PTE_SH_INNER)
 
 // shift a physical address to the right place for a PTE.

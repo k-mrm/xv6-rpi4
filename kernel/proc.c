@@ -409,11 +409,6 @@ scheduler(void)
         if(!p->ctxid)
           p->ctxid = asid_gen++;
         switchuvm(p);
-        char* ka = (char *)uva2ka(p->pagetable, p->trapframe->elr);
-        printf("entry proc %p\n", p->trapframe->elr);
-        printf("%p ka %p ", p->trapframe, ka);
-        for(int i = 0; i < 128; i++)
-          printf("%x ", ka[i]);
         swtch(&c->context, &p->context);
 
         switchkvm();

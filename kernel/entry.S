@@ -192,7 +192,7 @@ entryothers:  // secondary CPU starts here
         msr ttbr1_el1, x1
 
         dsb	ishst
-        tlbi vmalle1
+        tlbi vmalle1is
         dsb	ish
         isb
 
@@ -235,3 +235,36 @@ _start:
         b main
 
         b .   // spin
+
+// cache_flush(void *start, void *end)
+.global cache_flush
+cache_flush:
+        mrs x2, ctr_el0
+        ubfx x4, x2, #16, #4
+        mov x3, #4
+        lsl x3, x3, x4
+        sub x4, x3, #1
+        bic x4, x0, x4
+cdc:
+        dc cvau, x4
+        add x4, x4, x3
+        cmp x4, x1
+        b.lt cdc
+        
+        dsb ish
+
+        and x2, x2, #0xf
+        mov x3, #4
+        lsl x3, x3, x2
+        sub x4, x3, #1
+        bic x4, x0, x4
+cic:
+        ic ivau, x4
+        add x4, x4, x3
+        cmp x4, x1
+        b.lt cic
+
+        dsb ish
+        isb
+
+        ret

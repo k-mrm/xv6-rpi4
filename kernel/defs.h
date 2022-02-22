@@ -11,6 +11,8 @@ struct superblock;
 struct trapframe;
 enum pinmode;
 
+void cpu_sync_cache(void *va, uint64 sz);
+
 // bio.c
 void            binit(void);
 struct buf*     bread(uint, uint);

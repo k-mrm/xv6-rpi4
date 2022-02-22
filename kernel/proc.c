@@ -405,14 +405,16 @@ scheduler(void)
         p->state = RUNNING;
         c->proc = p;
         switchuvm(p);
-        char* ka = (char *)uva2ka(p->pagetable, 0);
+        char* ka = (char *)uva2ka(p->pagetable, p->trapframe->elr);
         printf("entry proc %p\n", p->trapframe->elr);
         printf("%p ka %p ", p->trapframe, ka);
         for(int i = 0; i < 128; i++)
           printf("%x ", ka[i]);
-        char *v = (char*)p->trapframe->elr;
+        printf("patggggg\n");
         for(int i = 0; i < 128; i++)
-          printf("%x ", v[i]);
+          printf("%x ", p->pagetable[i]);
+        asm volatile("at s1e0r, %0" : : "r"(p->trapframe->elr) : "memory");
+        printf("paaaaar %p\n", r_par_el1());
         swtch(&c->context, &p->context);
 
         switchkvm();

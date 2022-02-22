@@ -262,9 +262,15 @@ switchuvm(struct proc *p)
     panic("switchuvm: no pagetable");
 
   w_ttbr0_el1(V2P(p->pagetable));
+  printf("ittbr0 %p ", r_ttbr0_el1());
+  isb();
+
   flush_tlb();
 
-  __sync_synchronize();
+  asm volatile("ic iallu" ::: "memory");
+
+  dsb(nsh);
+  isb();
 }
 
 void

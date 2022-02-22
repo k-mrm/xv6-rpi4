@@ -24,6 +24,14 @@ r_vbar_el1()
   return x;
 }
 
+static inline uint64
+r_par_el1()
+{
+  uint64 x;
+  asm volatile("mrs %0, par_el1" : "=r" (x) );
+  return x;
+}
+
 // TODO: fix comment
 // supervisor address translation and protection;
 // holds the address of the page table.
@@ -182,11 +190,7 @@ isb()
   asm volatile("isb");
 }
 
-static inline void
-dsb()
-{
-  asm volatile("dsb sy");
-}
+#define dsb(ty)   asm volatile("dsb " #ty)
 
 // flush the TLB.
 static inline void
@@ -253,7 +257,7 @@ typedef uint64 *pagetable_t; // 512 PTEs
 #define PTE_INDX(i)   (((i) & 7) << 2)
 #define PTE_DEVICE    PTE_INDX(AI_DEVICE_nGnRnE_IDX)
 #define PTE_NORMAL_NC PTE_INDX(AI_NORMAL_NC_IDX)
-#define PTE_NORMAL    (PTE_INDX(AI_NORMAL_CACHE_IDX))
+#define PTE_NORMAL    (PTE_INDX(AI_NORMAL_CACHE_IDX)|PTE_SH(3))
 
 // shift a physical address to the right place for a PTE.
 #define PA2PTE(pa)  ((uint64)(pa) & 0xfffffffff000)

@@ -8,6 +8,10 @@
 #include "spinlock.h"
 #include "proc.h"
 
+uint64 asid_gen = 1;
+
+extern __attribute__((aligned(PGSIZE))) pte_t l1kpgt[512];
+
 /*
  * the kernel's page table.
  */
@@ -57,9 +61,8 @@ kvminithart()
 {
   w_ttbr1_el1(V2P(kernel_pagetable));
   w_ttbr0_el1(0);
-  flush_tlb();
 
-  __sync_synchronize();
+  flush_tlb();
 }
 
 // Return the address of the PTE in page table pagetable
@@ -221,7 +224,7 @@ uvminit(pagetable_t pagetable, uchar *src, uint sz)
     panic("inituvm: more than a page");
   mem = kalloc();
   memset(mem, 0, PGSIZE);
-  mappages(pagetable, 0, PGSIZE, V2P(mem), PTE_NORMAL|PTE_U);
+  mappages(pagetable, 0, PGSIZE, V2P(mem), PTE_NORMAL|PTE_USER);
   memmove(mem, src, sz);
 }
 
@@ -244,7 +247,7 @@ uvmalloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz)
       return 0;
     }
     memset(mem, 0, PGSIZE);
-    if(mappages(pagetable, a, PGSIZE, V2P(mem), PTE_NORMAL|PTE_U) != 0){
+    if(mappages(pagetable, a, PGSIZE, V2P(mem), PTE_NORMAL|PTE_USER) != 0){
       kfree(mem);
       uvmdealloc(pagetable, a, oldsz);
       return 0;
@@ -261,13 +264,19 @@ switchuvm(struct proc *p)
   if(p->pagetable == 0)
     panic("switchuvm: no pagetable");
 
-  w_ttbr0_el1(V2P(p->pagetable));
-  printf("ittbr0 %p ", r_ttbr0_el1());
+  uint64 asid = p->ctxid;
+  uint64 ttbr0 = V2P(p->pagetable) | (asid << 48);
+
+  w_ttbr0_el1(ttbr0);
+
+  dsb(nsh);
   isb();
 
-  flush_tlb();
+  printf("ittbr0 %p ", r_ttbr0_el1());
 
-  asm volatile("ic iallu" ::: "memory");
+  // flush_tlb();
+
+  // asm volatile("ic iallu" ::: "memory");
 
   dsb(nsh);
   isb();

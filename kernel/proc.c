@@ -12,6 +12,8 @@ struct proc proc[NPROC];
 
 struct proc *initproc;
 
+extern uint64 asid_gen;
+
 int nextpid = 1;
 struct spinlock pid_lock;
 
@@ -404,17 +406,14 @@ scheduler(void)
         // before jumping back to us.
         p->state = RUNNING;
         c->proc = p;
+        if(!p->ctxid)
+          p->ctxid = asid_gen++;
         switchuvm(p);
         char* ka = (char *)uva2ka(p->pagetable, p->trapframe->elr);
         printf("entry proc %p\n", p->trapframe->elr);
         printf("%p ka %p ", p->trapframe, ka);
         for(int i = 0; i < 128; i++)
           printf("%x ", ka[i]);
-        printf("patggggg\n");
-        for(int i = 0; i < 128; i++)
-          printf("%x ", p->pagetable[i]);
-        asm volatile("at s1e0r, %0" : : "r"(p->trapframe->elr) : "memory");
-        printf("paaaaar %p\n", r_par_el1());
         swtch(&c->context, &p->context);
 
         switchkvm();

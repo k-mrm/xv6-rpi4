@@ -224,6 +224,7 @@ typedef uint64 *pagetable_t; // 512 PTEs
 // 0 -- this block entry has not yet.
 // 1 -- this block entry has been used.
 #define PTE_AF  (1 << 10)
+#define PTE_nG  (1 << 11)
 // PTE_AP(Access Permission) is 2bit field.
 //        EL0   EL1
 // 00 --   x    RW
@@ -238,16 +239,18 @@ typedef uint64 *pagetable_t; // 512 PTEs
 #define PTE_UXN (1UL << 54)   // Unprivileged(user) eXecute Never
 #define PTE_XN (PTE_PXN|PTE_UXN)  // eXecute Never
 
+#define PTE_USER  (PTE_U|PTE_nG)
+
 // Shareable attribute
-#define PTE_SH(sh)  (((sh) & 3) << 8)
+#define PTE_SH(sh)    (((sh) & 3) << 8)
 #define PTE_SH_OUTER  PTE_SH(2)   // outer sharable
 #define PTE_SH_INNER  PTE_SH(3)   // inner sharable
 
 // attribute index
 // index is set by mair_el1
-#define AI_DEVICE_nGnRnE_IDX  0x0
-#define AI_NORMAL_NC_IDX      0x1
-#define AI_NORMAL_CACHE_IDX   0x2
+#define AI_DEVICE_nGnRnE_IDX  0
+#define AI_NORMAL_NC_IDX      1
+#define AI_NORMAL_CACHE_IDX   2
 
 // memory type
 #define MT_DEVICE_nGnRnE  0x0
@@ -255,9 +258,9 @@ typedef uint64 *pagetable_t; // 512 PTEs
 #define MT_NORMAL_CACHE   0xff
 
 #define PTE_INDX(i)   (((i) & 7) << 2)
-#define PTE_DEVICE    PTE_INDX(AI_DEVICE_nGnRnE_IDX)
+#define PTE_DEVICE    (PTE_INDX(AI_DEVICE_nGnRnE_IDX)|PTE_SH_INNER)
 #define PTE_NORMAL_NC PTE_INDX(AI_NORMAL_NC_IDX)
-#define PTE_NORMAL    (PTE_INDX(AI_NORMAL_CACHE_IDX)|PTE_SH(3))
+#define PTE_NORMAL    (PTE_INDX(AI_NORMAL_CACHE_IDX)|PTE_SH_INNER)
 
 // shift a physical address to the right place for a PTE.
 #define PA2PTE(pa)  ((uint64)(pa) & 0xfffffffff000)
@@ -292,3 +295,5 @@ typedef uint64 *pagetable_t; // 512 PTEs
 #define TCR_SH1(n)    (((n) & 0x3) << 28)
 #define TCR_TG1(n)    (((n) & 0x3) << 30)
 #define TCR_IPS(n)    (((n) & 0x7) << 32)
+#define TCR_AS        (1 << 36)
+#define TCR_TBI0      (1 << 37)

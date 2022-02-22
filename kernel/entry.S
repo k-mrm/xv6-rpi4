@@ -191,8 +191,13 @@ entryothers:  // secondary CPU starts here
         msr ttbr0_el1, x0
         msr ttbr1_el1, x1
 
+        dsb	ishst
+        tlbi vmalle1
+        dsb	ish
+        isb
+
         // setup tcr
-        ldr x0, =(TCR_T0SZ(25)|TCR_T1SZ(25)|TCR_TG0(0)|TCR_TG1(2)|TCR_IPS(0)|TCR_IRGN0(1)|TCR_ORGN0(1)|TCR_SH0(3)|TCR_IRGN1(1)|TCR_ORGN1(1)|TCR_SH1(3))
+        ldr x0, =(TCR_T0SZ(25)|TCR_T1SZ(25)|TCR_TG0(0)|TCR_TG1(2)|TCR_IPS(0)|TCR_IRGN0(1)|TCR_ORGN0(1)|TCR_SH0(3)|TCR_IRGN1(1)|TCR_ORGN1(1)|TCR_SH1(3)|TCR_AS|TCR_TBI0)
         msr tcr_el1, x0
 
         // setup mair

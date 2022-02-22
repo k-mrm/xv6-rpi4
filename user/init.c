@@ -9,8 +9,6 @@
 #include "user/user.h"
 #include "kernel/fcntl.h"
 
-void putc(char);
-
 char *argv[] = { "sh", 0 };
 
 int

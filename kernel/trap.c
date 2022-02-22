@@ -58,7 +58,9 @@ usertrap(struct trapframe *tf)
   uint64 ec = (r_esr_el1() >> 26) & 0x3f;
   if(ec == 21){
     // system call
-    printf("syscall ");
+    printf("syscall %d", tf->x7);
+    asm volatile("at s1e0r, %0" : : "r"(tf->elr) : "memory");
+    printf("paaaaar %p\n", r_par_el1());
 
     if(p->killed)
       exit(-1);
@@ -68,14 +70,8 @@ usertrap(struct trapframe *tf)
     syscall();
   } else {
     dump_tf(tf);
-    char *a = (char*)tf->x22;
-    for(int i = 0; i < 0x800; i++)
-      printf("%x ", a[i]);
-    uint64 *pt = P2V(r_ttbr0_el1());
-    char* pg = (char*)uva2ka(pt, 0);
-    printf("pg %p::::::", pg);
-    for(int i = 0; i < 0x800; i++)
-      printf("%x ", pg[i]);
+    asm volatile("at s1e0r, %0" : : "r"(tf->elr) : "memory");
+    printf("paaaaar %p\n", r_par_el1());
     printf("usertrap(): unexpected ec %p %p pid=%d\n", ec, r_esr_el1(), p->pid);
     printf("            elr=%p far=%p\n", r_elr_el1(), r_far_el1());
     p->killed = 1;

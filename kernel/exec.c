@@ -7,6 +7,8 @@
 #include "defs.h"
 #include "elf.h"
 
+extern uint64 asid_gen;
+
 static int loadseg(pde_t *pgdir, uint64 addr, struct inode *ip, uint offset, uint sz);
 
 int
@@ -115,6 +117,7 @@ exec(char *path, char **argv)
   p->trapframe->elr = elf.entry;  // initial program counter = main
   p->trapframe->spsr = 0;     // switch to EL0
   p->trapframe->sp = sp; // initial stack pointer
+  p->ctxid = asid_gen++;
   switchuvm(p);
   uvmfree(oldpagetable, oldsz);
 

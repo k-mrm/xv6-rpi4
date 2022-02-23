@@ -10,8 +10,6 @@
 
 uint64 asid_gen = 1;
 
-extern __attribute__((aligned(PGSIZE))) pte_t l1kpgt[512];
-
 /*
  * the kernel's page table.
  */
@@ -273,8 +271,6 @@ switchuvm(struct proc *p)
 
   dsb(sy);
   isb();
-
-  printf("ittbr0 %p ", r_ttbr0_el1());
 }
 
 void

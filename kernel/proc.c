@@ -391,7 +391,6 @@ scheduler(void)
 {
   struct proc *p;
   struct cpu *c = mycpu();
-  // printf("%d scheduler\n", cpuid());
 
   c->proc = 0;
   for(;;){
@@ -409,6 +408,8 @@ scheduler(void)
         if(!p->ctxid)
           p->ctxid = asid_gen++;
         switchuvm(p);
+        for(uint64 i = 0; i < p->sz; i += PGSIZE)
+          cpu_sync_cache((void *)i, PGSIZE);
         swtch(&c->context, &p->context);
 
         switchkvm();
@@ -479,8 +480,6 @@ forkret(void)
     first = 0;
     fsinit(ROOTDEV);
   }
-
-  printf("tf %p", tf);
 
   usertrapret(tf);
 }

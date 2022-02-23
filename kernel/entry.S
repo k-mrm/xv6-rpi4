@@ -236,9 +236,10 @@ _start:
 
         b .   // spin
 
-// cache_flush(void *start, void *end)
+// cache_flush(void *va_start, void *va_end)
 .global cache_flush
 cache_flush:
+        // flush D
         mrs x2, ctr_el0
         ubfx x4, x2, #16, #4
         mov x3, #4
@@ -253,6 +254,7 @@ cdc:
         
         dsb ish
 
+        // flush I
         and x2, x2, #0xf
         mov x3, #4
         lsl x3, x3, x2

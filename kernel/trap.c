@@ -65,7 +65,6 @@ usertrap(struct trapframe *tf)
 
     syscall();
   } else {
-    dump_tf(tf);
     printf("usertrap(): unexpected ec %p %p pid=%d\n", ec, r_esr_el1(), p->pid);
     printf("            elr=%p far=%p\n", r_elr_el1(), r_far_el1());
     p->killed = 1;
@@ -74,16 +73,7 @@ usertrap(struct trapframe *tf)
   if(p->killed)
     exit(-1);
 
-  /*
-  printf("!!!!tf->elr %p", tf->elr);
-  uint32 *aaa = (uint32 *)tf->elr;
-  for(int i = 0; i < 0x100; i++)
-    printf("%p ", aaa[i]);
-    */
-
   intr_off();
-
-  cpu_sync_cache((void *)tf->elr, PGSIZE);
 }
 
 // interrupts and exceptions from kernel code go here via kernelvec,

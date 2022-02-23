@@ -120,7 +120,9 @@ exec(char *path, char **argv)
   p->ctxid = asid_gen++;
   switchuvm(p);
   uvmfree(oldpagetable, oldsz);
-  flush_tlb();
+
+  for(uint64 i = 0; i < sz; i += PGSIZE)
+    cpu_sync_cache((void *)i, PGSIZE);
 
   return argc; // this ends up in x0, the first argument to main(argc, argv)
 
@@ -143,13 +145,11 @@ loadseg(pagetable_t pagetable, uint64 va, struct inode *ip, uint offset, uint sz
 {
   uint i, n;
   uint64 pa;
-  printf("loadseg %d\n", sz);
 
   for(i = 0; i < sz; i += PGSIZE){
     pa = uva2ka(pagetable, va + i);
     if(pa == 0)
       panic("loadseg: address should exist");
-    printf("loadseg va%p pa%p\n", va, pa);
     if(sz - i < PGSIZE)
       n = sz - i;
     else

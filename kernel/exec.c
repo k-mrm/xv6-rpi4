@@ -121,7 +121,7 @@ exec(char *path, char **argv)
   switchuvm(p);
   uvmfree(oldpagetable, oldsz);
 
-  for(uint64 i = 0; i < sz; i += PGSIZE)
+  for(uint64 i = 0; i < p->sz; i += PGSIZE)
     cpu_sync_cache((void *)i, PGSIZE);
 
   return argc; // this ends up in x0, the first argument to main(argc, argv)

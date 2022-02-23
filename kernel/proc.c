@@ -151,6 +151,7 @@ freeproc(struct proc *p)
   p->pagetable = 0;
   p->sz = 0;
   p->pid = 0;
+  p->ctxid = 0;
   p->parent = 0;
   p->name[0] = 0;
   p->chan = 0;
@@ -407,9 +408,12 @@ scheduler(void)
         c->proc = p;
         if(!p->ctxid)
           p->ctxid = asid_gen++;
+
         switchuvm(p);
+
         for(uint64 i = 0; i < p->sz; i += PGSIZE)
           cpu_sync_cache((void *)i, PGSIZE);
+
         swtch(&c->context, &p->context);
 
         switchkvm();

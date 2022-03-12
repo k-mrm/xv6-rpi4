@@ -48,7 +48,8 @@ TOOLPREFIX := $(shell if aarch64-unknown-elf-objdump -i 2>&1 | grep 'elf64-big' 
 	echo "***" 1>&2; exit 1; fi)
 endif
 
-QEMU = qemu-system-aarch64
+QEMUPREFIX = /home/k-mrm/project/qemu-patch-raspberry4/build/
+QEMU = $(QEMUPREFIX)qemu-system-aarch64
 
 CC = $(TOOLPREFIX)gcc
 AS = $(TOOLPREFIX)gas
@@ -168,8 +169,8 @@ ifndef CPUS
 CPUS := 4
 endif
 
-QEMUOPTS = -cpu cortex-a72 -machine raspi3 -kernel $K/kernel -m 1G -smp $(CPUS) -nographic
-QEMUTOPTS = -cpu cortex-a72 -machine raspi3 -kernel $T/hwtest -m 1G -smp $(CPUS) -nographic
+QEMUOPTS = -cpu cortex-a72 -machine raspi4b1g -kernel $K/kernel -m 1G -smp $(CPUS) -nographic
+QEMUTOPTS = -cpu cortex-a72 -machine raspi4b1g -kernel $T/hwtest -m 1G -smp $(CPUS) -nographic
 
 qemu: kernel8.img
 	$(QEMU) $(QEMUOPTS)
@@ -179,6 +180,11 @@ qemu-test: hwtest.img
 
 rpi4: kernel8.img
 	cp kernel8.img $(SDPATH)
+
+dts: kernel8.img
+	$(QEMU) -cpu cortex-a72 -machine raspi4b1g,dumpdtb=a.dtb -kernel $K/kernel -m 1G -smp $(CPUS) -nographic
+	dtc -I dtb -O dts -o a.dts a.dtb
+	$(RM) a.dtb
 
 test: hwtest.img
 	cp hwtest.img $(SDPATH)kernel8.img	

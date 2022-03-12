@@ -11,26 +11,25 @@
 _entry:
         mrs x1, mpidr_el1
         and x1, x1, #3
-        cbz x1, swtch_el1_primary   // primary
+        //cbz x1, swtch_el1_primary   // primary
+        cbz x1, swtch_el2
         b swtch_el1_secondary
 
 hang:
         wfe
         b hang
 
-/*
         // switch EL3 to EL2
 swtch_el2:
         mov x0, #0x4b1    // RW=1, SMD=1, RES=1, NS=1
         msr scr_el3, x0
 
-        adr x1, swtch_el1
+        adr x1, swtch_el1_primary
         msr elr_el3, x1
 
         mov x2, #0x9      // EL2H
         msr spsr_el3, x2
         eret
-        */
 
         // switch EL2 to EL1
 swtch_el1_primary:
@@ -197,11 +196,15 @@ entryothers:  // secondary CPU starts here
         isb
 
         // setup tcr
-        ldr x0, =(TCR_T0SZ(25)|TCR_T1SZ(25)|TCR_TG0(0)|TCR_TG1(2)|TCR_IPS(0)|TCR_IRGN0(1)|TCR_ORGN0(1)|TCR_SH0(3)|TCR_IRGN1(1)|TCR_ORGN1(1)|TCR_SH1(3)|TCR_AS|TCR_TBI0)
+        ldr x0, =(TCR_T0SZ(25)|TCR_T1SZ(25)|TCR_TG0(0)|TCR_TG1(2)|TCR_IPS(0)| \
+                  TCR_IRGN0(1)|TCR_ORGN0(1)|TCR_SH0(3)| \
+                  TCR_IRGN1(1)|TCR_ORGN1(1)|TCR_SH1(3)| \
+                  TCR_AS|TCR_TBI0)
         msr tcr_el1, x0
 
         // setup mair
-        ldr x1, =((MT_DEVICE_nGnRnE<<(8*AI_DEVICE_nGnRnE_IDX)) | (MT_NORMAL_NC<<(8*AI_NORMAL_NC_IDX)) | (MT_NORMAL_CACHE<<(8*AI_NORMAL_CACHE_IDX)))
+        ldr x1, =((MT_DEVICE_nGnRnE<<(8*AI_DEVICE_nGnRnE_IDX)) | (MT_NORMAL_NC<<(8*AI_NORMAL_NC_IDX)) | \
+                  (MT_NORMAL_CACHE<<(8*AI_NORMAL_CACHE_IDX)))
         msr mair_el1, x1
 
         isb

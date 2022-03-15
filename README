@@ -2,8 +2,10 @@ xv6-rpi4
 xv6-rpi4 has been confirmed on an actual Raspberry Pi 4B.
 NOT implemented: micro sd driver
 BUILD:
-  delete `ASFLAGS += -DRPI4_QEMU` in Makefile and `make rpi4` will generate `kernel8.img`.
-  `make qemu` will emulate xv6-rpi4 on qemu-patch-raspberry4(https://github.com/k-mrm/qemu-patch-raspberry4)
+  - run on raspberry pi 4B:
+    delete `ASFLAGS += -DRPI4_QEMU` in Makefile and `make rpi4` will generate `kernel8.img`.
+  - run on qemu
+    `make qemu` will emulate xv6-rpi4 on qemu-patch-raspberry4(https://github.com/k-mrm/qemu-patch-raspberry4)
 
 xv6 is a re-implementation of Dennis Ritchie's and Ken Thompson's Unix
 Version 6 (v6).  xv6 loosely follows the structure and style of v6,

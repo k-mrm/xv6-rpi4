@@ -48,7 +48,7 @@ TOOLPREFIX := $(shell if aarch64-unknown-elf-objdump -i 2>&1 | grep 'elf64-big' 
 	echo "***" 1>&2; exit 1; fi)
 endif
 
-QEMUPREFIX = /home/k-mrm/project/qemu-patch-raspberry4/build/
+QEMUPREFIX = ~/project/qemu-patch-raspberry4/build/
 QEMU = $(QEMUPREFIX)qemu-system-aarch64
 
 CC = $(TOOLPREFIX)gcc

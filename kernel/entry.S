@@ -2,23 +2,26 @@
 #include "memlayout.h"
 #include "param.h"
 
-        // qemu -kernel loads the kernel at 0x80000
-        // and causes each CPU to jump there.
         // kernel.ld causes the following code to
         // be placed at 0x80000.
 .section ".text"
 .global _entry
+
+#ifdef RPI4_QEMU
 _entry:
         mrs x1, mpidr_el1
         and x1, x1, #3
-        //cbz x1, swtch_el1_primary   // primary
         cbz x1, swtch_el2
         b swtch_el1_secondary
+#else /* !RPI4_QEMU */
+_entry:
+        mrs x1, mpidr_el1
+        and x1, x1, #3
+        cbz x1, swtch_el1_primary   // primary
+        b swtch_el1_secondary
+#endif
 
-hang:
-        wfe
-        b hang
-
+#ifdef RPI4_QEMU
         // switch EL3 to EL2
 swtch_el2:
         mov x0, #0x4b1    // RW=1, SMD=1, RES=1, NS=1
@@ -30,6 +33,7 @@ swtch_el2:
         mov x2, #0x9      // EL2H
         msr spsr_el3, x2
         eret
+#endif
 
         // switch EL2 to EL1
 swtch_el1_primary:
@@ -237,7 +241,9 @@ _start:
         // jump to main()
         b main
 
-        b .   // spin
+hang:
+        wfe
+        b hang
 
 // cache_flush(void *va_start, void *va_end)
 .global cache_flush

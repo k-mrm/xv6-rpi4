@@ -73,6 +73,7 @@ endif
 
 LDFLAGS = -z max-page-size=4096
 ASFLAGS = -Og -ggdb -mcpu=cortex-a72 -MD -I.
+ASFLAGS += -DRPI4_QEMU
 
 $T/hwtest: $(TOBJS) $T/test.ld
 	$(LD) $(LDFLAGS) -T $T/test.ld -o $T/hwtest $(TOBJS)
@@ -172,7 +173,7 @@ endif
 QEMUOPTS = -cpu cortex-a72 -machine raspi4b1g -kernel $K/kernel -m 1G -smp $(CPUS) -nographic
 QEMUTOPTS = -cpu cortex-a72 -machine raspi4b1g -kernel $T/hwtest -m 1G -smp $(CPUS) -nographic
 
-qemu: kernel8.img
+qemu: $K/kernel
 	$(QEMU) $(QEMUOPTS)
 
 qemu-test: hwtest.img

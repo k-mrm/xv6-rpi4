@@ -13,15 +13,7 @@ _entry:
         and x1, x1, #3
         cbz x1, swtch_el2
         b swtch_el1_secondary
-#else /* !RPI4_QEMU */
-_entry:
-        mrs x1, mpidr_el1
-        and x1, x1, #3
-        cbz x1, swtch_el1_primary   // primary
-        b swtch_el1_secondary
-#endif
 
-#ifdef RPI4_QEMU
         // switch EL3 to EL2
 swtch_el2:
         mov x0, #0x4b1    // RW=1, SMD=1, RES=1, NS=1
@@ -33,6 +25,12 @@ swtch_el2:
         mov x2, #0x9      // EL2H
         msr spsr_el3, x2
         eret
+#else /* !RPI4_QEMU */
+_entry:
+        mrs x1, mpidr_el1
+        and x1, x1, #3
+        cbz x1, swtch_el1_primary   // primary
+        b swtch_el1_secondary
 #endif
 
         // switch EL2 to EL1
@@ -78,20 +76,20 @@ entry:
         //
         // Phase 1.
         // map the kernel code identically.
-        // map [0x80000,PA(end)) to [0x80000,PA(end))
-        // memory type is normal
+        // map [0x0,PA(end)) to [0x0,PA(end))
+        // memory type is normal.
         //
         // Phase 2.
         // map the kernel code.
-        // map [0xffffff8000080000,VA(end)) to [0x80000,PA(end))
+        // map [0xffffff8000000000,VA(PHYSTOP)) to [0x0,PA(PHYSTOP))
         // memory type is normal.
 
         // Phase 1
-        // map [0x80000,PA(end)) to [0x80000,PA(end))
+        // map [0x0,0x40000000) to [0x0,0x40000000)
         adrp x0, l2entrypgt0
 
         mov x1, #0x0            // start pa
-        ldr x2, =0x40000000-1   // end pa
+        ldr x2, =V2P_WO(end)-1     // end pa
 
         lsr x3, x1, #PXSHIFT(2)
         and x3, x3, #PXMASK   // PX(2, x1)
@@ -118,11 +116,11 @@ l2epgt_loop:
         str x6, [x0, x3, lsl #3]    // l1entrypgt[l1idx] = table entry
 
         // Phase 2
-        // map [0xffffff8000080000,VA(end)) to [0x80000,PA(end))
+        // map [0xffffff8000000000,VA(PHYSTOP)) to [0x0,PA(PHYSTOP))
         adrp x0, l2kpgt
 
         mov x1, #0x0            // start pa
-        ldr x2, =0x40000000-1   // end pa
+        ldr x2, =PHYSTOP-1      // end pa
         mov x3, #KERNBASE
         add x4, x1, x3    // start va
         add x5, x2, x3    // end va

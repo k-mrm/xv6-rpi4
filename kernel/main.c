@@ -25,12 +25,11 @@ main()
     printf("xv6 kernel is booting\n");
     printf("\n");
     // cpu1_wakeup(V2P(_entry));
-    __sync_synchronize();
-    //kinit1(end, (void*)SECTROUNDUP(KERNLINK));  // physical page allocator
+    //kinit1(end, (void*)SECTROUNDUP((uint64)end));  // physical page allocator
     kinit1(end, P2V(PHYSTOP));  // physical page allocator
     kvminit();       // create kernel page table
     kvminithart();   // turn on paging
-    //kinit2((void*)SECTROUNDUP(KERNLINK), P2V(PHYSTOP));
+    //kinit2((void*)SECTROUNDUP((uint64)end), P2V(PHYSTOP));
     procinit();      // process table
     gicv2init();     // set up interrupt controller
     gicv2inithart();

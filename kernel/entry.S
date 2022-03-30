@@ -12,7 +12,7 @@ _entry:
         mrs x1, mpidr_el1
         and x1, x1, #3
         cbz x1, swtch_el2
-        b swtch_el1_secondary
+        b swtch_el2_secondary
 
         // switch EL3 to EL2
 swtch_el2:
@@ -20,6 +20,17 @@ swtch_el2:
         msr scr_el3, x0
 
         adr x1, swtch_el1_primary
+        msr elr_el3, x1
+
+        mov x2, #0x9      // EL2H
+        msr spsr_el3, x2
+        eret
+
+swtch_el2_secondary:
+        mov x0, #0x4b1    // RW=1, SMD=1, RES=1, NS=1
+        msr scr_el3, x0
+
+        adr x1, swtch_el1_secondary
         msr elr_el3, x1
 
         mov x2, #0x9      // EL2H
@@ -242,6 +253,24 @@ _start:
 hang:
         wfe
         b hang
+
+// dcahe_invalidate(void *va_start, void *va_end)
+.global dcache_invalidate
+dcache_invalidate:
+        // flush D
+        mrs x2, ctr_el0
+        ubfx x4, x2, #16, #4
+        mov x3, #4
+        lsl x3, x3, x4
+        sub x4, x3, #1
+        bic x4, x0, x4
+dci:
+        dc civac, x4
+        add x4, x4, x3
+        cmp x4, x1
+        b.lt dci
+        
+        dsb ish
 
 // cache_flush(void *va_start, void *va_end)
 .global cache_flush

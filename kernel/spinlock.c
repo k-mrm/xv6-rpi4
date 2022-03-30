@@ -25,11 +25,6 @@ acquire(struct spinlock *lk)
   if(holding(lk))
     panic("acquire");
 
-  // On RISC-V, sync_lock_test_and_set turns into an atomic swap:
-  //   a5 = 1
-  //   s1 = &lk->locked
-  //   amoswap.w.aq a5, a5, (s1)
-  /*
   asm volatile(
     "mov x1, %0\n"
     "mov w2, #1\n"
@@ -38,8 +33,7 @@ acquire(struct spinlock *lk)
     "stxr w3, w2, [x1]\n"
     "cbnz w3, 1b\n"
     :: "r"(&lk->locked)
-  ); */
-  while(__atomic_exchange_n(&lk->locked, 1, __ATOMIC_ACQ_REL) == 1);
+  );
 
   // Tell the C compiler and the processor to not move loads or stores
   // past this point, to ensure that the critical section's memory

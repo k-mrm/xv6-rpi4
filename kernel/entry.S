@@ -271,6 +271,9 @@ dci:
         b.lt dci
         
         dsb ish
+        isb
+
+        ret
 
 // cache_flush(void *va_start, void *va_end)
 .global cache_flush
